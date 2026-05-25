@@ -3,9 +3,14 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { uploadScan } from "@/app/actions/scans";
+import { markScanUploaded } from "@/app/actions/profile";
 import { Modal } from "@/components/ui";
 
-export function UploadScanForm() {
+interface UploadScanFormProps {
+  isOnboarding?: boolean;
+}
+
+export function UploadScanForm({ isOnboarding = false }: UploadScanFormProps) {
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [modal, setModal] = useState<{ show: boolean; type: "success" | "error"; title: string; message: string }>({
@@ -25,15 +30,23 @@ export function UploadScanForm() {
     const result = await uploadScan(formData);
 
     if (result.success) {
-      setModal({
-        show: true,
-        type: "success",
-        title: "Upload Successful",
-        message: "Your scan has been uploaded successfully!",
-      });
-      setShowForm(false);
-      e.currentTarget.reset();
-      router.refresh();
+      // Mark scan as uploaded in profile
+      await markScanUploaded();
+
+      if (isOnboarding) {
+        // During onboarding, redirect to dashboard with success message
+        router.push("/dashboard?welcome=true");
+      } else {
+        setModal({
+          show: true,
+          type: "success",
+          title: "Upload Successful",
+          message: "Your scan has been uploaded successfully!",
+        });
+        setShowForm(false);
+        e.currentTarget.reset();
+        router.refresh();
+      }
     } else {
       setModal({
         show: true,

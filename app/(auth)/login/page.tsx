@@ -12,8 +12,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <>
-      {/* Left Side - Image & Info */}
-      <div className="relative hidden bg-brand-dark lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16">
+      {/* Left Side - Image & Info (Fixed) */}
+      <div className="fixed inset-y-0 left-0 hidden bg-brand-dark lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -45,8 +45,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div />
       </div>
 
-      {/* Right Side - Form */}
-      <div className="flex flex-1 flex-col bg-white">
+      {/* Right Side - Form (Scrollable) */}
+      <div className="flex flex-1 flex-col bg-white lg:ml-[50%] min-h-screen overflow-y-auto">
         {/* Mobile Header */}
         <div className="px-6 py-5 lg:hidden">
           <Link href="/" className="inline-flex items-center gap-3">

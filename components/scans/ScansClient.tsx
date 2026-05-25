@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui";
 import { UploadScanForm } from "./UploadScanForm";
+import { ScanInterpretationButton } from "./ScanInterpretation";
 import type { Scan } from "@/types/scans";
 
 interface ScansClientProps {
   initialScans: Scan[];
+  isOnboarding?: boolean;
 }
 
-export function ScansClient({ initialScans }: ScansClientProps) {
+export function ScansClient({ initialScans, isOnboarding = false }: ScansClientProps) {
   const [filter, setFilter] = useState<"all" | "trimester" | "month">("all");
   const scans = initialScans; // In a real app, you'd re-fetch based on filter
 
@@ -39,7 +41,7 @@ export function ScansClient({ initialScans }: ScansClientProps) {
       {/* Upload Area */}
       <Card className="mb-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg shadow-brand-dark/5">
         <CardContent className="p-8">
-          <UploadScanForm />
+          <UploadScanForm isOnboarding={isOnboarding} />
         </CardContent>
       </Card>
 
@@ -128,24 +130,34 @@ export function ScansClient({ initialScans }: ScansClientProps) {
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      <a
-                        href={scan.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 px-3 py-1.5 bg-white border-2 border-brand-mid text-brand-mid text-xs font-medium rounded-lg hover:bg-brand-surface transition-colors text-center"
-                      >
-                        View
-                      </a>
-                      <a
-                        href={scan.file_url}
-                        download
-                        className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                      </a>
+                    <div className="space-y-2 pt-2">
+                      {/* AI Analysis Button - Only for image scans */}
+                      {!scan.file_url.endsWith('.pdf') && (
+                        <ScanInterpretationButton
+                          scanId={scan.id}
+                          existingInterpretation={scan.ai_interpretation}
+                          scanType={scan.scan_type || undefined}
+                        />
+                      )}
+                      <div className="flex gap-2">
+                        <a
+                          href={scan.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 px-3 py-1.5 bg-white border-2 border-brand-mid text-brand-mid text-xs font-medium rounded-lg hover:bg-brand-surface transition-colors text-center"
+                        >
+                          View
+                        </a>
+                        <a
+                          href={scan.file_url}
+                          download
+                          className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>

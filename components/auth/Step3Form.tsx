@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Button, Input } from "@/components/ui";
 import {
   updateProfileStep3,
   type ProfileState,
 } from "@/app/actions/profile";
+import { MEDICAL_HISTORY_OPTIONS } from "@/types";
 
 export function Step3Form() {
   const [state, action, pending] = useActionState<ProfileState, FormData>(
@@ -14,19 +15,50 @@ export function Step3Form() {
     null
   );
 
+  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+
+  const toggleCondition = (condition: string) => {
+    setSelectedConditions(prev => {
+      if (condition === 'None of the above') {
+        return prev.includes(condition) ? [] : ['None of the above'];
+      }
+
+      const filtered = prev.filter(c => c !== 'None of the above');
+
+      if (filtered.includes(condition)) {
+        return filtered.filter(c => c !== condition);
+      }
+      return [...filtered, condition];
+    });
+  };
+
   return (
     <form action={action} className="space-y-5">
-      <div>
-        <Input
-          id="dueDate"
-          name="dueDate"
-          type="date"
-          label="Expected Due Date"
-          placeholder="Select date"
-        />
-        {state?.errors?.dueDate && (
-          <p className="mt-1 text-sm text-red-500">{state.errors.dueDate[0]}</p>
-        )}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Input
+            id="dueDate"
+            name="dueDate"
+            type="date"
+            label="Expected Due Date"
+            placeholder="Select date"
+          />
+          {state?.errors?.dueDate && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.dueDate[0]}</p>
+          )}
+        </div>
+        <div>
+          <Input
+            id="lastMenstrualPeriod"
+            name="lastMenstrualPeriod"
+            type="date"
+            label="Last Menstrual Period"
+            placeholder="Select date"
+          />
+          {state?.errors?.lastMenstrualPeriod && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.lastMenstrualPeriod[0]}</p>
+          )}
+        </div>
       </div>
 
       <div>
@@ -58,6 +90,39 @@ export function Step3Form() {
             {state.errors.isFirstPregnancy[0]}
           </p>
         )}
+      </div>
+
+      {/* Medical History Section */}
+      <div className="border-t border-border pt-5 mt-5">
+        <h3 className="text-lg font-semibold text-brand-dark mb-2">Medical History</h3>
+        <p className="text-sm text-text-muted mb-4">Select any conditions that apply to you</p>
+
+        <input
+          type="hidden"
+          name="medicalHistory"
+          value={JSON.stringify(selectedConditions)}
+        />
+
+        <div className="grid grid-cols-2 gap-2">
+          {MEDICAL_HISTORY_OPTIONS.map((condition) => (
+            <label
+              key={condition}
+              className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                selectedConditions.includes(condition)
+                  ? 'border-brand-mid bg-brand-surface'
+                  : 'border-border hover:border-brand-light'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selectedConditions.includes(condition)}
+                onChange={() => toggleCondition(condition)}
+                className="h-4 w-4 rounded border-border text-brand-mid focus:ring-brand-accent"
+              />
+              <span className="text-sm">{condition}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div>

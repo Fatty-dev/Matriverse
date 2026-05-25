@@ -22,9 +22,37 @@ export interface Profile {
   is_first_pregnancy: boolean | null;
   referral_source: string | null;
   onboarding_completed: boolean | null;
+  // New enhanced fields
+  last_menstrual_period: string | null;
+  medical_history: MedicalHistoryItem[] | null;
+  partner_name: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  emergency_contact_relationship: string | null;
+  has_uploaded_scan: boolean | null;
   created_at: string;
   updated_at: string;
 }
+
+// Medical history options
+export interface MedicalHistoryItem {
+  condition: string;
+  selected: boolean;
+}
+
+export const MEDICAL_HISTORY_OPTIONS = [
+  'Diabetes',
+  'Gestational Diabetes',
+  'Hypertension',
+  'Pre-eclampsia',
+  'Previous C-Section',
+  'Miscarriage',
+  'Anemia',
+  'Thyroid Disorder',
+  'Heart Condition',
+  'Asthma',
+  'None of the above',
+] as const;
 
 // Health profile types
 export interface HealthProfile {
@@ -69,4 +97,42 @@ export interface MoodEntry {
   emoji: string;
   notes?: string;
   createdAt: string;
+}
+
+// Video library types
+export type VideoCategory = 'education' | 'exercise' | 'breathing' | 'labor_prep' | 'postpartum' | 'nutrition';
+
+export interface Video {
+  id: string;
+  title: string;
+  description: string | null;
+  video_url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  category: VideoCategory;
+  trimester: number | null;
+  tags: string[];
+  is_featured: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserVideoProgress {
+  id: string;
+  user_id: string;
+  video_id: string;
+  progress_seconds: number;
+  completed: boolean;
+  last_watched_at: string;
+  created_at: string;
+}
+
+// Scan interpretation types
+export interface ScanInterpretation {
+  summary: string;
+  key_findings: string[];
+  recommendations: string[];
+  trimester_info: string;
+  next_steps: string[];
 }

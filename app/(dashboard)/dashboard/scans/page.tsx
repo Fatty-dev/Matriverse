@@ -2,17 +2,30 @@ import { Header } from "@/components/layout";
 import { getProfile } from "@/app/actions/profile";
 import { getScans } from "@/app/actions/scans";
 import { ScansClient } from "@/components/scans";
+import { OnboardingScanPrompt } from "@/components/scans/OnboardingScanPrompt";
 
-export default async function ScansPage() {
+interface ScansPageProps {
+  searchParams: Promise<{ onboarding?: string }>;
+}
+
+export default async function ScansPage({ searchParams }: ScansPageProps) {
+  const params = await searchParams;
+  const isOnboarding = params.onboarding === "true";
   const profile = await getProfile();
   const scansResult = await getScans();
   const scans = scansResult.success ? scansResult.data || [] : [];
+  const hasUploadedScan = profile?.has_uploaded_scan || scans.length > 0;
 
   return (
     <>
       <Header title="My Scans" profile={profile} />
 
       <main className="flex-1 px-8 sm:px-10 lg:px-12 py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
+        {/* Onboarding Banner */}
+        {isOnboarding && !hasUploadedScan && (
+          <OnboardingScanPrompt />
+        )}
+
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -22,7 +35,7 @@ export default async function ScansPage() {
           </div>
         </div>
 
-        <ScansClient initialScans={scans} />
+        <ScansClient initialScans={scans} isOnboarding={isOnboarding} />
       </main>
     </>
   );

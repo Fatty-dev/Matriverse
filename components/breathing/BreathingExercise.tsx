@@ -20,8 +20,20 @@ export function BreathingExerciseComponent({ exercise, onComplete, onCancel }: B
   const [phaseProgress, setPhaseProgress] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const previousPhaseRef = useRef<Phase | null>(null);
+  const currentCycleRef = useRef(currentCycle);
+  const totalTimeRef = useRef(totalTime);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    currentCycleRef.current = currentCycle;
+  }, [currentCycle]);
+
+  useEffect(() => {
+    totalTimeRef.current = totalTime;
+  }, [totalTime]);
 
   // Initialize audio context
   useEffect(() => {
@@ -133,14 +145,24 @@ export function BreathingExerciseComponent({ exercise, onComplete, onCancel }: B
     }
   };
 
-  const handleComplete = useCallback(async () => {
-    setIsActive(false);
-    await saveBreathingSession(exercise.name, exercise.typeKey, totalTime);
-    onComplete();
-  }, [exercise.name, exercise.typeKey, totalTime, onComplete]);
+  // Handle completion in a separate effect to avoid setState during render
+  useEffect(() => {
+    if (isCompleted) {
+      const saveSession = async () => {
+        setIsActive(false);
+        const finalTime = totalTimeRef.current;
+        const result = await saveBreathingSession(exercise.name, exercise.typeKey, finalTime);
+        if (!result.success) {
+          console.error("Failed to save breathing session:", result.message);
+        }
+        onComplete();
+      };
+      saveSession();
+    }
+  }, [isCompleted, exercise.name, exercise.typeKey, onComplete]);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || isCompleted) return;
 
     const interval = setInterval(() => {
       setTotalTime((prev) => prev + 1);
@@ -156,14 +178,21 @@ export function BreathingExerciseComponent({ exercise, onComplete, onCancel }: B
             setCurrentPhase(nextPhase);
             return 0;
           } else {
-            // Cycle complete
-            if (currentCycle + 1 >= exercise.cycles) {
-              // Exercise complete
-              handleComplete();
+            // Cycle complete - use ref for accurate current value
+            const actualCycle = currentCycleRef.current;
+            if (actualCycle + 1 >= exercise.cycles) {
+              // Exercise complete - just set the flag, effect will handle the rest
+              setIsCompleted(true);
               return 0;
             } else {
-              // Start next cycle
-              setCurrentCycle((c) => c + 1);
+              // Start next cycle - prevent exceeding max
+              setCurrentCycle((c) => {
+                const nextCycle = c + 1;
+                if (nextCycle >= exercise.cycles) {
+                  return c;
+                }
+                return nextCycle;
+              });
               setCurrentPhase("inhale");
               return 0;
             }
@@ -175,7 +204,7 @@ export function BreathingExerciseComponent({ exercise, onComplete, onCancel }: B
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, currentPhase, currentCycle, exercise.cycles, handleComplete]);
+  }, [isActive, isCompleted, currentPhase, exercise.cycles]);
 
   const startExercise = () => {
     setIsActive(true);
@@ -183,7 +212,10 @@ export function BreathingExerciseComponent({ exercise, onComplete, onCancel }: B
     setCurrentPhase("inhale");
     setPhaseProgress(0);
     setTotalTime(0);
+    setIsCompleted(false);
     previousPhaseRef.current = null;
+    currentCycleRef.current = 0;
+    totalTimeRef.current = 0;
   };
 
   const pauseExercise = () => {
@@ -200,7 +232,10 @@ export function BreathingExerciseComponent({ exercise, onComplete, onCancel }: B
     setCurrentPhase("inhale");
     setPhaseProgress(0);
     setTotalTime(0);
+    setIsCompleted(false);
     previousPhaseRef.current = null;
+    currentCycleRef.current = 0;
+    totalTimeRef.current = 0;
     onCancel();
   };
 

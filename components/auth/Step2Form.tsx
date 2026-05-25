@@ -75,6 +75,75 @@ export function Step2Form() {
         )}
       </div>
 
+      <div>
+        <Input
+          id="partnerName"
+          name="partnerName"
+          type="text"
+          label="Partner's Name (Optional)"
+          placeholder="Enter partner's name"
+        />
+      </div>
+
+      {/* Emergency Contact Section */}
+      <div className="border-t border-border pt-5 mt-5">
+        <h3 className="text-lg font-semibold text-brand-dark mb-4">Emergency Contact</h3>
+
+        <div className="space-y-4">
+          <div>
+            <Input
+              id="emergencyContactName"
+              name="emergencyContactName"
+              type="text"
+              label="Contact Name"
+              placeholder="Emergency contact name"
+            />
+            {state?.errors?.emergencyContactName && (
+              <p className="mt-1 text-sm text-red-500">
+                {state.errors.emergencyContactName[0]}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Input
+              id="emergencyContactPhone"
+              name="emergencyContactPhone"
+              type="tel"
+              label="Contact Phone"
+              placeholder="+234 xxx xxx xxxx"
+            />
+            {state?.errors?.emergencyContactPhone && (
+              <p className="mt-1 text-sm text-red-500">
+                {state.errors.emergencyContactPhone[0]}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text mb-2">
+              Relationship
+            </label>
+            <select
+              name="emergencyContactRelationship"
+              className="w-full h-11 px-4 border border-border rounded-lg bg-white text-text focus:border-brand-mid focus:ring-1 focus:ring-brand-mid outline-none"
+            >
+              <option value="">Select relationship</option>
+              <option value="spouse">Spouse/Partner</option>
+              <option value="parent">Parent</option>
+              <option value="sibling">Sibling</option>
+              <option value="friend">Friend</option>
+              <option value="other">Other</option>
+            </select>
+            {state?.errors?.emergencyContactRelationship && (
+              <p className="mt-1 text-sm text-red-500">
+                {state.errors.emergencyContactRelationship[0]}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {state?.message && (
         <p className="text-sm text-red-500">{state.message}</p>
       )}

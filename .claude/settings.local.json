@@ -8,7 +8,9 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(npm install:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(npx supabase:*)"
     ]
   }
 }
