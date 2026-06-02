@@ -16,11 +16,11 @@ interface AICoachChatProps {
 }
 
 const suggestedQuestions = [
-  "What are safe exercises for my trimester?",
-  "How can I manage morning sickness?",
-  "What foods should I avoid?",
-  "When should I contact my doctor?",
-  "Tips for better sleep during pregnancy?",
+  "When is my Self Assessment deadline?",
+  "What expenses can I claim as a sole trader?",
+  "How do I register for VAT?",
+  "What records do I need to keep for HMRC?",
+  "When do I need to file my Corporation Tax return?",
 ];
 
 export function AICoachChat({ firstName, currentConversationId, onConversationCreated }: AICoachChatProps) {
@@ -28,7 +28,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
     {
       id: "welcome",
       role: "assistant",
-      content: `Hello ${firstName}, welcome to your AI Pregnancy Coach. I'm here to provide evidence-based guidance on pregnancy symptoms, nutrition, exercise, and general wellness. Feel free to ask me anything about your pregnancy journey.`,
+      content: `Hello ${firstName}, welcome to JIBK Assist. I'm here to provide general information about tax, accounting, and business compliance in the UK. Feel free to ask me anything, and remember that for specific advice tailored to your situation, our qualified advisors at JIBK Limited are always happy to help.`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -55,7 +55,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
         {
           id: "welcome",
           role: "assistant",
-          content: `Hello ${firstName}, welcome to your AI Pregnancy Coach. I'm here to provide evidence-based guidance on pregnancy symptoms, nutrition, exercise, and general wellness. Feel free to ask me anything about your pregnancy journey.`,
+          content: `Hello ${firstName}, welcome to JIBK Assist. I'm here to provide general information about tax, accounting, and business compliance in the UK. Feel free to ask me anything, and remember that for specific advice tailored to your situation, our qualified advisors at JIBK Limited are always happy to help.`,
         },
       ]);
     }
@@ -70,7 +70,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
           {
             id: "welcome",
             role: "assistant",
-            content: `Hello ${firstName}, welcome to your AI Pregnancy Coach. I'm here to provide evidence-based guidance on pregnancy symptoms, nutrition, exercise, and general wellness. Feel free to ask me anything about your pregnancy journey.`,
+            content: `Hello ${firstName}, welcome to JIBK Assist. I'm here to provide general information about tax, accounting, and business compliance in the UK. Feel free to ask me anything, and remember that for specific advice tailored to your situation, our qualified advisors at JIBK Limited are always happy to help.`,
           },
         ]);
       }
@@ -298,7 +298,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder="Ask me anything about your pregnancy..."
+            placeholder="Ask me anything about tax or accounting..."
             disabled={isLoading}
             className="flex-1 px-4 py-3 bg-brand-surface rounded-xl text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50"
           />
