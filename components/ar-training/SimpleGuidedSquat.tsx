@@ -182,7 +182,12 @@ export function SimpleGuidedSquat() {
           msg = "⬇️ Going down... keep going";
           speak("Go down", "low");
         } else if (squatPhase === "descending") {
-          if (depth < 50) {
+          if (depth < 10) {
+            // They went back up without reaching depth
+            newPhase = "standing";
+            msg = "Try to go deeper on the next one!";
+            repStartTimeRef.current = null;
+          } else if (depth < 50) {
             msg = `⬇️ Keep going down (${Math.round(depth)}%)`;
           } else if (depth < 80) {
             msg = `⬇️ Almost there! Go deeper (${Math.round(depth)}%)`;
@@ -208,10 +213,6 @@ export function SimpleGuidedSquat() {
           completeRep(metrics, repStartTimeRef.current || Date.now());
           msg = "✓ Well done! Ready for the next one?";
           lastMessageRef.current = "";
-        } else if (squatPhase === "descending" && depth < 10) {
-          newPhase = "standing";
-          msg = "Try to go deeper on the next one!";
-          repStartTimeRef.current = null;
         }
 
         setSquatPhase(newPhase);

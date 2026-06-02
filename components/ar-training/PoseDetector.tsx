@@ -9,7 +9,7 @@ interface PoseDetectorProps {
   onPoseDetected?: (result: PoseDetectionResult) => void;
   onError?: (error: Error) => void;
   enableDrawing?: boolean;
-  canvasRef?: React.RefObject<HTMLCanvasElement>;
+  canvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 
 export function PoseDetector({
@@ -22,7 +22,7 @@ export function PoseDetector({
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const poseLandmarkerRef = useRef<PoseLandmarker | null>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const drawingUtilsRef = useRef<DrawingUtils | null>(null);
 
   // Initialize MediaPipe Pose Landmarker

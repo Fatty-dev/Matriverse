@@ -213,8 +213,13 @@ export function GuidedDeepSquatSession() {
           message = "Going down... keep your back straight";
           speak("Lower down slowly", "low");
         } else if (currentPhase === "descending") {
-          // Progressive depth coaching
-          if (depth < 40) {
+          // Check if they went back up without reaching depth
+          if (depth < 10) {
+            newPhase = "standing";
+            message = "You didn't go deep enough. Try again!";
+            speak("Go deeper on the next one", "medium");
+            repStartTimeRef.current = null;
+          } else if (depth < 40) {
             message = `Keep going down - ${Math.round(depth)}% depth`;
           } else if (depth < 60) {
             message = `Good progress - ${Math.round(depth)}% depth, go deeper`;
@@ -254,12 +259,6 @@ export function GuidedDeepSquatSession() {
           // Rep completed!
           completeRep(metrics, repStartTimeRef.current || Date.now());
           message = `Rep ${currentRep + 1} complete! Get ready for the next one`;
-        } else if (currentPhase === "descending" && depth < 10) {
-          // Reset if they go back up without reaching depth
-          newPhase = "standing";
-          message = "You didn't go deep enough. Try again!";
-          speak("Go deeper on the next one", "medium");
-          repStartTimeRef.current = null;
         }
 
         setCurrentPhase(newPhase);

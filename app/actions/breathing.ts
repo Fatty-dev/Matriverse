@@ -149,7 +149,7 @@ export async function getBreathingStats(): Promise<{
 
   // Shorten favorite exercise name if it exists
   if (favoriteExercise) {
-    favoriteExercise = favoriteExercise.replace(" Breathing", "");
+    favoriteExercise = (favoriteExercise as string).replace(" Breathing", "");
   }
 
   return {
