@@ -1,250 +1,201 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
+import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
+import { getPoseLandmarker } from "@/lib/ar-training/pose-landmarker-singleton";
+import { isMediapipeWasmConsoleNoise } from "@/lib/ar-training/mediapipe-errors";
+import { syncOverlayCanvasToVideo } from "@/lib/ar-training/canvas-video-sync";
+import { getVideoFrameCanvas } from "@/lib/ar-training/video-frame-canvas";
 import type { PoseDetectionResult } from "@/types/ar-training";
 
 interface PoseDetectorProps {
   videoElement: HTMLVideoElement | null;
   onPoseDetected?: (result: PoseDetectionResult) => void;
   onError?: (error: Error) => void;
+  onReady?: () => void;
   enableDrawing?: boolean;
   canvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  mirrored?: boolean;
+}
+
+function runDetect(
+  landmarker: PoseLandmarker,
+  frameSource: HTMLCanvasElement
+) {
+  return landmarker.detect(frameSource);
 }
 
 export function PoseDetector({
   videoElement,
   onPoseDetected,
   onError,
+  onReady,
   enableDrawing = false,
   canvasRef,
+  mirrored = true,
 }: PoseDetectorProps) {
-  const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const poseLandmarkerRef = useRef<PoseLandmarker | null>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const drawingUtilsRef = useRef<DrawingUtils | null>(null);
+  const activeRef = useRef(true);
+  const wasmNoiseLoggedRef = useRef(false);
 
-  // Initialize MediaPipe Pose Landmarker
+  const onPoseDetectedRef = useRef(onPoseDetected);
+  const onErrorRef = useRef(onError);
+  const onReadyRef = useRef(onReady);
+
   useEffect(() => {
-    let mounted = true;
+    onPoseDetectedRef.current = onPoseDetected;
+    onErrorRef.current = onError;
+    onReadyRef.current = onReady;
+  });
 
-    const initializePoseLandmarker = async () => {
+  useEffect(() => {
+    activeRef.current = true;
+    let cancelled = false;
+
+    const initialize = async () => {
       try {
-        setIsLoading(true);
+        const poseLandmarker = await getPoseLandmarker();
+        if (cancelled) return;
 
-        // Load MediaPipe vision tasks
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-        );
-
-        // Create PoseLandmarker
-        const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
-          numPoses: 1,
-          minPoseDetectionConfidence: 0.5,
-          minPosePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
-        });
-
-        if (mounted) {
-          poseLandmarkerRef.current = poseLandmarker;
-          setIsReady(true);
-          setIsLoading(false);
-        }
+        poseLandmarkerRef.current = poseLandmarker;
+        setIsReady(true);
+        onReadyRef.current?.();
       } catch (error) {
-        console.error("Failed to initialize pose landmarker:", error);
-        if (mounted) {
-          setIsLoading(false);
-          onError?.(error as Error);
-        }
+        if (cancelled || isMediapipeWasmConsoleNoise(error)) return;
+        onErrorRef.current?.(
+          error instanceof Error
+            ? error
+            : new Error("Failed to load pose detection. Run npm install and refresh.")
+        );
       }
     };
 
-    initializePoseLandmarker();
+    initialize();
 
     return () => {
-      mounted = false;
+      cancelled = true;
+      activeRef.current = false;
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      poseLandmarkerRef.current?.close();
+      poseLandmarkerRef.current = null;
+      setIsReady(false);
     };
-  }, [onError]);
+  }, []);
 
-  // Initialize drawing utils when canvas is available
-  useEffect(() => {
-    if (enableDrawing && canvasRef?.current) {
+  const ensureDrawingUtils = useCallback(() => {
+    if (!drawingUtilsRef.current && canvasRef?.current) {
       const ctx = canvasRef.current.getContext("2d");
       if (ctx) {
         drawingUtilsRef.current = new DrawingUtils(ctx);
       }
     }
-  }, [enableDrawing, canvasRef]);
+    return drawingUtilsRef.current;
+  }, [canvasRef]);
 
-  // Process video frames
   const detectPose = useCallback(() => {
+    if (!activeRef.current) return;
+
     if (
       !videoElement ||
       !poseLandmarkerRef.current ||
       !isReady ||
-      videoElement.readyState < 2
+      videoElement.readyState < 2 ||
+      videoElement.videoWidth === 0 ||
+      videoElement.paused ||
+      videoElement.ended
     ) {
       animationFrameRef.current = requestAnimationFrame(detectPose);
       return;
     }
 
-    try {
-      const timestamp = performance.now();
-      const result = poseLandmarkerRef.current.detectForVideo(videoElement, timestamp);
+    let result: ReturnType<PoseLandmarker["detect"]> | null = null;
 
-      if (result.landmarks && result.landmarks.length > 0) {
+    try {
+      if (enableDrawing && canvasRef?.current) {
+        syncOverlayCanvasToVideo(canvasRef.current, videoElement);
+      }
+
+      const frameCanvas = getVideoFrameCanvas(videoElement, mirrored);
+      result = runDetect(poseLandmarkerRef.current, frameCanvas);
+    } catch (error) {
+      if (isMediapipeWasmConsoleNoise(error)) {
+        if (!wasmNoiseLoggedRef.current) {
+          wasmNoiseLoggedRef.current = true;
+          console.warn(
+            "[PoseDetector] Ignoring MediaPipe dev-console noise; pose tracking continues."
+          );
+        }
+        try {
+          const frameCanvas = getVideoFrameCanvas(videoElement, mirrored);
+          result = runDetect(poseLandmarkerRef.current, frameCanvas);
+        } catch {
+          // Still noisy in dev — skip this frame
+        }
+      } else if (activeRef.current) {
+        onErrorRef.current?.(error as Error);
+      }
+    }
+
+    if (result) {
+      const timestamp = performance.now();
+
+      if (!result.landmarks || result.landmarks.length === 0) {
+        if (enableDrawing && canvasRef?.current) {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(255, 165, 0, 0.85)";
+            ctx.fillRect(10, 10, 280, 44);
+            ctx.fillStyle = "#000";
+            ctx.font = "bold 18px Arial";
+            ctx.fillText("Searching for your pose...", 20, 38);
+          }
+        }
+      } else {
         const poseResult: PoseDetectionResult = {
           landmarks: result.landmarks[0],
           worldLandmarks: result.worldLandmarks?.[0] || [],
           timestamp,
         };
 
-        onPoseDetected?.(poseResult);
+        onPoseDetectedRef.current?.(poseResult);
 
-        // Draw pose on canvas if enabled
-        if (enableDrawing && canvasRef?.current && drawingUtilsRef.current) {
+        const drawingUtils = ensureDrawingUtils();
+        if (enableDrawing && canvasRef?.current && drawingUtils) {
           const canvas = canvasRef.current;
           const ctx = canvas.getContext("2d");
 
           if (ctx) {
-            // Sync canvas size with video
-            if (videoElement && (canvas.width !== videoElement.videoWidth || canvas.height !== videoElement.videoHeight)) {
-              canvas.width = videoElement.videoWidth;
-              canvas.height = videoElement.videoHeight;
-            }
-
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const drawingUtils = drawingUtilsRef.current;
             const landmarks = result.landmarks[0];
 
-            if (landmarks) {
-              // Enable shadow/glow for better visibility
-              ctx.shadowBlur = 15;
-              ctx.shadowColor = "#00FFFF";
+            drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
+              color: "#00FFFF",
+              lineWidth: 6,
+            });
 
-              // Draw connectors with BRIGHT visible colors and GLOW
-              drawingUtils.drawConnectors(
-                landmarks,
-                PoseLandmarker.POSE_CONNECTIONS,
-                { color: "#00FFFF", lineWidth: 12 } // Even thicker cyan lines with glow
-              );
-
-              // Reset shadow for dots
-              ctx.shadowBlur = 20;
-              ctx.shadowColor = "#FFFF00";
-
-              // Draw key joint landmarks BIGGER and BRIGHTER
-              drawingUtils.drawLandmarks(landmarks, {
-                color: "#FF00FF",
-                fillColor: "#FFFF00",
-                lineWidth: 4,
-                radius: 18, // Much bigger dots
-              });
-
-              // Reset shadow for text
-              ctx.shadowBlur = 0;
-
-              // Count visible landmarks
-              const visibleCount = landmarks.filter(l => (l.visibility || 0) > 0.5).length;
-
-              // Draw detection status banner at top
-              ctx.fillStyle = "rgba(0, 255, 0, 0.8)";
-              ctx.fillRect(10, 10, 350, 60);
-              ctx.strokeStyle = "#00FF00";
-              ctx.lineWidth = 3;
-              ctx.strokeRect(10, 10, 350, 60);
-
-              ctx.fillStyle = "#000000";
-              ctx.font = "bold 28px Arial";
-              ctx.fillText(`🟢 TRACKING ACTIVE`, 20, 40);
-              ctx.font = "bold 20px Arial";
-              ctx.fillText(`${visibleCount}/33 landmarks visible`, 20, 60);
-
-              // Add labels for key body parts with bigger text
-              ctx.font = "bold 32px Arial";
-              ctx.textAlign = "left";
-
-              const keyPoints = [
-                { idx: 11, text: "👈 L-SHOULDER", color: "#00FF00" },
-                { idx: 12, text: "R-SHOULDER 👉", color: "#00FF00" },
-                { idx: 23, text: "👈 L-HIP", color: "#FFD700" },
-                { idx: 24, text: "R-HIP 👉", color: "#FFD700" },
-                { idx: 25, text: "👈 L-KNEE", color: "#FF6B6B" },
-                { idx: 26, text: "R-KNEE 👉", color: "#FF6B6B" },
-                { idx: 27, text: "👈 L-ANKLE", color: "#4ECDC4" },
-                { idx: 28, text: "R-ANKLE 👉", color: "#4ECDC4" },
-              ];
-
-              keyPoints.forEach(({ idx, text, color }) => {
-                const landmark = landmarks[idx];
-                if (landmark && (landmark.visibility || 0) > 0.5) {
-                  const x = landmark.x * canvas.width;
-                  const y = landmark.y * canvas.height;
-
-                  // Draw large circle at joint
-                  ctx.beginPath();
-                  ctx.arc(x, y, 25, 0, 2 * Math.PI);
-                  ctx.fillStyle = color;
-                  ctx.fill();
-                  ctx.strokeStyle = "#FFFFFF";
-                  ctx.lineWidth = 4;
-                  ctx.stroke();
-
-                  // Draw text with thick black outline for visibility
-                  const textX = idx % 2 === 0 ? x - 200 : x + 30; // Left or right side
-                  ctx.strokeStyle = "#000000";
-                  ctx.lineWidth = 8;
-                  ctx.strokeText(text, textX, y);
-
-                  ctx.fillStyle = color;
-                  ctx.fillText(text, textX, y);
-                }
-              });
-
-              // Draw bounding box around person
-              const xCoords = landmarks.filter(l => (l.visibility || 0) > 0.5).map(l => l.x * canvas.width);
-              const yCoords = landmarks.filter(l => (l.visibility || 0) > 0.5).map(l => l.y * canvas.height);
-
-              if (xCoords.length > 0 && yCoords.length > 0) {
-                const minX = Math.min(...xCoords) - 50;
-                const maxX = Math.max(...xCoords) + 50;
-                const minY = Math.min(...yCoords) - 50;
-                const maxY = Math.max(...yCoords) + 50;
-
-                ctx.strokeStyle = "#00FF00";
-                ctx.lineWidth = 5;
-                ctx.setLineDash([20, 10]);
-                ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-                ctx.setLineDash([]);
-              }
-            }
+            drawingUtils.drawLandmarks(landmarks, {
+              color: "#FF00FF",
+              fillColor: "#FFFF00",
+              lineWidth: 2,
+              radius: 8,
+            });
           }
         }
       }
-    } catch (error) {
-      console.error("Pose detection error:", error);
-      onError?.(error as Error);
     }
 
     animationFrameRef.current = requestAnimationFrame(detectPose);
-  }, [videoElement, isReady, onPoseDetected, enableDrawing, canvasRef, onError]);
+  }, [videoElement, isReady, enableDrawing, canvasRef, mirrored, ensureDrawingUtils]);
 
-  // Start detection loop when video is ready
   useEffect(() => {
-    if (videoElement && isReady) {
+    if (videoElement && isReady && activeRef.current) {
       animationFrameRef.current = requestAnimationFrame(detectPose);
 
       return () => {
@@ -255,5 +206,5 @@ export function PoseDetector({
     }
   }, [videoElement, isReady, detectPose]);
 
-  return null; // This is a headless component
+  return null;
 }

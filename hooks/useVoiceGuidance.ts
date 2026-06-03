@@ -5,10 +5,19 @@ import type { VoiceGuidanceMessage } from "@/types/ar-training";
 
 interface UseVoiceGuidanceOptions {
   enabled?: boolean;
-  rate?: number; // 0.1 to 10
-  pitch?: number; // 0 to 2
-  volume?: number; // 0 to 1
+  rate?: number;
+  pitch?: number;
+  volume?: number;
   lang?: string;
+}
+
+const BENIGN_SPEECH_ERRORS = new Set(["canceled", "interrupted"]);
+
+function isBenignSpeechError(event: SpeechSynthesisErrorEvent): boolean {
+  if (BENIGN_SPEECH_ERRORS.has(event.error)) return true;
+  // Some browsers fire onerror with an empty event when cancel() is called
+  if (!event.error && event.type === "error") return true;
+  return false;
 }
 
 export function useVoiceGuidance({
@@ -23,107 +32,145 @@ export function useVoiceGuidance({
   const messageQueueRef = useRef<VoiceGuidanceMessage[]>([]);
   const currentMessageRef = useRef<VoiceGuidanceMessage | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const isSpeakingRef = useRef(false);
   const lastMessageTimeRef = useRef<number>(0);
+  const optionsRef = useRef({ rate, pitch, volume, lang });
+  optionsRef.current = { rate, pitch, volume, lang };
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      setIsSupported(true);
-      synthRef.current = window.speechSynthesis;
-    }
-  }, []);
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
-  const speak = useCallback(
-    (text: string, priority: "high" | "medium" | "low" = "medium") => {
-      if (!enabled || !isSupported || !synthRef.current) return;
+    const synth = window.speechSynthesis;
+    synthRef.current = synth;
+    setIsSupported(true);
 
-      const now = Date.now();
-      const message: VoiceGuidanceMessage = { text, priority, timestamp: now };
+    const pickVoice = () => {
+      const voices = synth.getVoices();
+      if (voices.length === 0) return;
+      voiceRef.current =
+        voices.find((v) => v.lang === lang) ??
+        voices.find((v) => v.lang.startsWith(lang.split("-")[0])) ??
+        voices.find((v) => v.default) ??
+        voices[0];
+    };
 
-      // High priority messages interrupt current speech
-      if (priority === "high") {
-        synthRef.current.cancel();
-        messageQueueRef.current = [message];
-        processQueue();
-        return;
-      }
-
-      // Prevent spamming - don't queue if same message was spoken recently (within 3 seconds)
-      if (
-        currentMessageRef.current?.text === text &&
-        now - lastMessageTimeRef.current < 3000
-      ) {
-        return;
-      }
-
-      // Add to queue
-      messageQueueRef.current.push(message);
-
-      // Start processing if not already speaking
-      if (!isSpeaking) {
-        processQueue();
-      }
-    },
-    [enabled, isSupported, isSpeaking]
-  );
+    pickVoice();
+    synth.addEventListener("voiceschanged", pickVoice);
+    return () => synth.removeEventListener("voiceschanged", pickVoice);
+  }, [lang]);
 
   const processQueue = useCallback(() => {
-    if (!synthRef.current || messageQueueRef.current.length === 0) {
+    const synth = synthRef.current;
+    if (!synth || messageQueueRef.current.length === 0) {
+      isSpeakingRef.current = false;
       setIsSpeaking(false);
       currentMessageRef.current = null;
       return;
+    }
+
+    // Chrome can pause the queue until resumed
+    if (synth.paused) {
+      synth.resume();
     }
 
     const message = messageQueueRef.current.shift()!;
     currentMessageRef.current = message;
     lastMessageTimeRef.current = message.timestamp;
 
+    const { rate: r, pitch: p, volume: v, lang: l } = optionsRef.current;
     const utterance = new SpeechSynthesisUtterance(message.text);
-    utterance.rate = rate;
-    utterance.pitch = pitch;
-    utterance.volume = volume;
-    utterance.lang = lang;
+    utterance.rate = r;
+    utterance.pitch = p;
+    utterance.volume = v;
+    utterance.lang = l;
+    if (voiceRef.current) {
+      utterance.voice = voiceRef.current;
+    }
 
     utterance.onstart = () => {
+      isSpeakingRef.current = true;
       setIsSpeaking(true);
     };
 
     utterance.onend = () => {
+      isSpeakingRef.current = false;
       setIsSpeaking(false);
-      // Process next message in queue after a short delay
-      setTimeout(processQueue, 300);
+      window.setTimeout(processQueue, 280);
     };
 
-    utterance.onerror = (error) => {
-      console.error("Speech synthesis error:", error);
+    utterance.onerror = (event) => {
+      isSpeakingRef.current = false;
       setIsSpeaking(false);
       currentMessageRef.current = null;
-      // Try next message
-      setTimeout(processQueue, 300);
+
+      if (!isBenignSpeechError(event)) {
+        console.warn("[VoiceGuidance] Speech error:", event.error || "unknown");
+      }
+
+      window.setTimeout(processQueue, 280);
     };
 
-    synthRef.current.speak(utterance);
-  }, [rate, pitch, volume, lang]);
+    isSpeakingRef.current = true;
+    synth.speak(utterance);
+  }, []);
+
+  const processQueueRef = useRef(processQueue);
+  processQueueRef.current = processQueue;
+
+  const speak = useCallback(
+    (text: string, priority: "high" | "medium" | "low" = "medium") => {
+      if (!enabled || !synthRef.current) return;
+
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      const now = Date.now();
+      const message: VoiceGuidanceMessage = { text: trimmed, priority, timestamp: now };
+
+      if (priority === "high") {
+        synthRef.current.cancel();
+        messageQueueRef.current = [message];
+        isSpeakingRef.current = false;
+        processQueueRef.current();
+        return;
+      }
+
+      if (
+        currentMessageRef.current?.text === trimmed &&
+        now - lastMessageTimeRef.current < 3000
+      ) {
+        return;
+      }
+
+      messageQueueRef.current.push(message);
+
+      if (!isSpeakingRef.current) {
+        processQueueRef.current();
+      }
+    },
+    [enabled]
+  );
 
   const stop = useCallback(() => {
-    if (synthRef.current) {
-      synthRef.current.cancel();
-      messageQueueRef.current = [];
-      currentMessageRef.current = null;
-      setIsSpeaking(false);
-    }
+    const synth = synthRef.current;
+    if (!synth) return;
+    synth.cancel();
+    messageQueueRef.current = [];
+    currentMessageRef.current = null;
+    isSpeakingRef.current = false;
+    setIsSpeaking(false);
   }, []);
 
   const pause = useCallback(() => {
-    if (synthRef.current) {
-      synthRef.current.pause();
-    }
+    synthRef.current?.pause();
   }, []);
 
   const resume = useCallback(() => {
-    if (synthRef.current) {
-      synthRef.current.resume();
-    }
+    synthRef.current?.resume();
   }, []);
+
+  useEffect(() => () => stop(), [stop]);
 
   return {
     speak,
@@ -133,4 +180,4 @@ export function useVoiceGuidance({
     isSupported,
     isSpeaking,
   };
-}
+};

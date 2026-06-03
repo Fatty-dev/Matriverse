@@ -103,6 +103,22 @@ export function isLandmarkVisible(
   return (landmark.visibility || 0) > threshold;
 }
 
+/** Average visibility of key full-body joints (0–1). Smoother than per-joint AND checks. */
+export function getFullBodyVisibilityScore(landmarks: NormalizedLandmark[]): number {
+  const joints = [
+    PoseLandmark.LEFT_SHOULDER,
+    PoseLandmark.RIGHT_SHOULDER,
+    PoseLandmark.LEFT_HIP,
+    PoseLandmark.RIGHT_HIP,
+    PoseLandmark.LEFT_KNEE,
+    PoseLandmark.RIGHT_KNEE,
+    PoseLandmark.LEFT_ANKLE,
+    PoseLandmark.RIGHT_ANKLE,
+  ];
+  const sum = joints.reduce((acc, idx) => acc + (landmarks[idx].visibility ?? 0), 0);
+  return sum / joints.length;
+}
+
 /**
  * Get hip center point (useful for squat depth calculation)
  */

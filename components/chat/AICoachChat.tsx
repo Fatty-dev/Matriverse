@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { sendMessage, getConversationMessages, type Conversation } from "@/app/actions/chat";
+import { sendMessage, getConversationMessages } from "@/app/actions/chat";
+import {
+  getMatriverseWelcomeMessage,
+  SUGGESTED_COACH_QUESTIONS,
+} from "@/lib/ai-coach/constants";
 
 type Message = {
   id: string;
@@ -15,22 +19,16 @@ interface AICoachChatProps {
   onConversationCreated?: (id: string) => void;
 }
 
-const suggestedQuestions = [
-  "When is my Self Assessment deadline?",
-  "What expenses can I claim as a sole trader?",
-  "How do I register for VAT?",
-  "What records do I need to keep for HMRC?",
-  "When do I need to file my Corporation Tax return?",
-];
+function welcomeMessage(firstName: string) {
+  return {
+    id: "welcome",
+    role: "assistant" as const,
+    content: getMatriverseWelcomeMessage(firstName),
+  };
+}
 
 export function AICoachChat({ firstName, currentConversationId, onConversationCreated }: AICoachChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: `Hello ${firstName}, welcome to JIBK Assist. I'm here to provide general information about tax, accounting, and business compliance in the UK. Feel free to ask me anything, and remember that for specific advice tailored to your situation, our qualified advisors at JIBK Limited are always happy to help.`,
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage(firstName)]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -51,13 +49,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
       loadConversation(currentConversationId);
     } else {
       // Reset to welcome message for new conversation
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: `Hello ${firstName}, welcome to JIBK Assist. I'm here to provide general information about tax, accounting, and business compliance in the UK. Feel free to ask me anything, and remember that for specific advice tailored to your situation, our qualified advisors at JIBK Limited are always happy to help.`,
-        },
-      ]);
+      setMessages([welcomeMessage(firstName)]);
     }
   }, [currentConversationId, firstName]);
 
@@ -66,13 +58,9 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
     try {
       const result = await getConversationMessages(conversationId);
       if (result.success && result.messages) {
-        setMessages(result.messages.length > 0 ? result.messages : [
-          {
-            id: "welcome",
-            role: "assistant",
-            content: `Hello ${firstName}, welcome to JIBK Assist. I'm here to provide general information about tax, accounting, and business compliance in the UK. Feel free to ask me anything, and remember that for specific advice tailored to your situation, our qualified advisors at JIBK Limited are always happy to help.`,
-          },
-        ]);
+        setMessages(
+          result.messages.length > 0 ? result.messages : [welcomeMessage(firstName)]
+        );
       }
     } catch (error) {
       console.error("Error loading conversation:", error);
@@ -275,7 +263,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
         <div className="px-6 pb-4">
           <p className="text-xs text-text-muted mb-2">Suggested questions:</p>
           <div className="flex flex-wrap gap-2">
-            {suggestedQuestions.map((question) => (
+            {SUGGESTED_COACH_QUESTIONS.map((question) => (
               <button
                 key={question}
                 onClick={() => handleSuggestedQuestion(question)}
@@ -298,7 +286,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder="Ask me anything about tax or accounting..."
+            placeholder="Ask about pregnancy, movement, breathing, or MatriVerse..."
             disabled={isLoading}
             className="flex-1 px-4 py-3 bg-brand-surface rounded-xl text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50"
           />

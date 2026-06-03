@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "copy:mediapipe": "node scripts/copy-mediapipe-assets.mjs",
+    "postinstall": "node scripts/copy-mediapipe-assets.mjs",
+    "dev": "npm run copy:mediapipe && next dev",
+    "build": "npm run copy:mediapipe && next build",
     "start": "next start",
     "lint": "eslint"
   },

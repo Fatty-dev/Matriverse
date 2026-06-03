@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { logout } from "@/app/actions/auth";
+import { useSidebar } from "@/contexts/SidebarContext";
 import type { Profile } from "@/types";
 
 interface HeaderProps {
@@ -37,6 +39,7 @@ export function Header({ title, profile }: HeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { toggle } = useSidebar();
 
   const initials = getInitials(profile?.first_name, profile?.last_name);
   const fullName = getFullName(profile?.first_name, profile?.last_name);
@@ -57,43 +60,51 @@ export function Header({ title, profile }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white border-b border-border px-8 sm:px-10 lg:px-12 py-5 sticky top-0 z-30">
+    <header className="bg-white border-b border-border px-4 sm:px-6 lg:px-12 py-4 sm:py-5 sticky top-0 z-30">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Empty left side - arrows and breadcrumbs removed */}
+        <div className="flex items-center gap-3">
+          {/* Mobile menu button */}
+          <button
+            onClick={toggle}
+            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-brand-surface text-text-muted transition-colors"
+            aria-label="Open menu"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          {/* Page title - visible on mobile */}
+          <h1 className="text-lg font-semibold text-text lg:hidden">{title}</h1>
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-4">
-          {/* Notifications */}
-          <button className="p-2 rounded-lg hover:bg-brand-surface text-text-muted transition-colors relative">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full"></span>
-          </button>
-
-          {/* Messages */}
-          <button className="p-2 rounded-lg hover:bg-brand-surface text-text-muted transition-colors">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* AI Coach Chat Link */}
+          <Link
+            href="/dashboard/ai-coach"
+            className="p-2 rounded-lg hover:bg-brand-surface text-text-muted transition-colors"
+            aria-label="AI Coach"
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-          </button>
+          </Link>
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-3 pl-4 border-l border-border hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-border hover:opacity-80 transition-opacity"
             >
-              <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
-                <span className="text-brand-dark font-semibold">{initials}</span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-brand-light rounded-full flex items-center justify-center">
+                <span className="text-brand-dark font-semibold text-sm sm:text-base">{initials}</span>
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-text">{fullName}</p>
                 <p className="text-xs text-text-muted">{week ? `Week ${week}` : "Welcome!"}</p>
               </div>
-              <svg className={`w-4 h-4 text-text-muted transition-transform ${dropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`hidden sm:block w-4 h-4 text-text-muted transition-transform ${dropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>

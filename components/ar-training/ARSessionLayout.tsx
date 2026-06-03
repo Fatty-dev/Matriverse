@@ -30,10 +30,23 @@ export function ARSessionLayout({
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isPoseReady, setIsPoseReady] = useState(false);
+  const [poseError, setPoseError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleVideoReady = useCallback((video: HTMLVideoElement) => {
+    console.log("[ARSessionLayout] Video ready:", video.videoWidth, "x", video.videoHeight);
     setVideoElement(video);
+  }, []);
+
+  const handlePoseReady = useCallback(() => {
+    console.log("[ARSessionLayout] PoseDetector ready");
+    setIsPoseReady(true);
+  }, []);
+
+  const handlePoseError = useCallback((error: Error) => {
+    console.error("[ARSessionLayout] PoseDetector error:", error);
+    setPoseError(error.message);
   }, []);
 
   const handleStartSession = useCallback(() => {
@@ -71,11 +84,11 @@ export function ARSessionLayout({
           mirrored={true}
         />
 
-        {/* Canvas for pose skeleton - ALWAYS visible */}
+        {/* Canvas for pose skeleton - ALWAYS visible, higher z-index to ensure visibility */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none object-cover"
-          style={{ zIndex: 15 }}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ zIndex: 20 }}
         />
 
         {/* Pose detection - ALWAYS running when video is ready */}
@@ -83,9 +96,26 @@ export function ARSessionLayout({
           <PoseDetector
             videoElement={videoElement}
             onPoseDetected={onPoseDetected}
+            onReady={handlePoseReady}
+            onError={handlePoseError}
             enableDrawing={true}
             canvasRef={canvasRef}
+            mirrored={true}
           />
+        )}
+
+        {/* Pose detection status indicator */}
+        {videoElement && !isPoseReady && !poseError && (
+          <div className="absolute top-4 right-4 z-30 bg-yellow-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <span className="text-sm font-medium">Loading pose detection...</span>
+          </div>
+        )}
+
+        {poseError && (
+          <div className="absolute top-4 right-4 z-30 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg">
+            <span className="text-sm font-medium">Pose detection error: {poseError}</span>
+          </div>
         )}
 
         {/* Visual overlay */}

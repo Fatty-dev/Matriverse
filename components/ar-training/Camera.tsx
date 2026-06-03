@@ -19,113 +19,60 @@ export function Camera({
   facingMode = "user",
 }: CameraProps) {
   const webcamRef = useRef<Webcam>(null);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const notifiedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(true);
 
-  // Request camera permission
-  const requestPermission = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const notifyVideoReady = useCallback(
+    (video: HTMLVideoElement) => {
+      if (notifiedRef.current) return;
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      });
-
-      // Stop the stream immediately - webcam component will handle it
-      stream.getTracks().forEach((track) => track.stop());
-
-      setHasPermission(true);
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Camera permission denied:", err);
-      setError("Camera access denied. Please grant permission to use AR training.");
-      setHasPermission(false);
-      setIsLoading(false);
-      onError?.(err as Error);
-    }
-  }, [facingMode, onError]);
-
-  // Auto-request permission on mount
-  useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
-
-  // Handle video ready
-  const handleUserMedia = useCallback(() => {
-    if (webcamRef.current?.video) {
-      const video = webcamRef.current.video;
-
-      // Wait for video to be fully loaded
-      const checkVideoReady = () => {
-        if (video.readyState >= 2) {
-          onVideoReady?.(video);
-        } else {
-          setTimeout(checkVideoReady, 100);
-        }
+      const deliver = () => {
+        if (video.videoWidth === 0 || video.videoHeight === 0) return;
+        notifiedRef.current = true;
+        setIsStarting(false);
+        setError(null);
+        video.playsInline = true;
+        video.muted = true;
+        void video.play().catch(() => {});
+        onVideoReady?.(video);
       };
 
-      checkVideoReady();
+      if (video.readyState >= 2 && video.videoWidth > 0) {
+        deliver();
+        return;
+      }
+
+      video.addEventListener("loadeddata", deliver, { once: true });
+      video.addEventListener("loadedmetadata", deliver, { once: true });
+    },
+    [onVideoReady]
+  );
+
+  const handleUserMedia = useCallback(() => {
+    const video = webcamRef.current?.video;
+    if (video) {
+      notifyVideoReady(video);
     }
-  }, [onVideoReady]);
+  }, [notifyVideoReady]);
+
+  // Fallback if onUserMedia does not fire (e.g. cached permission)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const video = webcamRef.current?.video;
+      if (video && !notifiedRef.current) {
+        notifyVideoReady(video);
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [notifyVideoReady]);
 
   const videoConstraints = {
     facingMode,
     width: { ideal: 1280 },
     height: { ideal: 720 },
-    aspectRatio: 16 / 9,
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full bg-black/90 rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-mid border-t-transparent mx-auto mb-4"></div>
-          <p className="text-white">Requesting camera access...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || hasPermission === false) {
-    return (
-      <div className="flex items-center justify-center h-full bg-black/90 rounded-lg">
-        <div className="text-center max-w-md px-6">
-          <svg
-            className="w-16 h-16 text-red-400 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-          <h3 className="text-lg font-semibold text-white mb-2">Camera Access Required</h3>
-          <p className="text-gray-300 mb-4">
-            {error || "Please allow camera access to use AR training features."}
-          </p>
-          <button
-            onClick={requestPermission}
-            className="px-6 py-3 bg-brand-mid text-white rounded-lg font-medium hover:bg-brand-dark transition-colors"
-          >
-            Grant Camera Access
-          </button>
-          <p className="text-sm text-gray-400 mt-4">
-            Your video is processed locally and never uploaded to our servers.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`relative ${className}`}>
@@ -136,19 +83,57 @@ export function Camera({
         onUserMedia={handleUserMedia}
         onUserMediaError={(err) => {
           console.error("Webcam error:", err);
-          setError("Failed to access camera");
-          onError?.(err as Error);
+          setIsStarting(false);
+          const message =
+            err instanceof DOMException && err.name === "NotAllowedError"
+              ? "Camera access denied. Please allow camera access in your browser settings."
+              : "Failed to access camera. Check that no other app is using it.";
+          setError(message);
+          onError?.(err instanceof Error ? err : new Error(message));
         }}
         mirrored={mirrored}
-        className="w-full h-full object-cover rounded-lg"
+        className="w-full h-full object-cover"
         style={{ transform: mirrored ? "scaleX(-1)" : "none" }}
+        playsInline
+        muted
       />
 
-      {/* Privacy indicator */}
-      <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-medium">
-        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-        Recording
-      </div>
+      {isStarting && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-mid border-t-transparent mx-auto mb-4" />
+            <p className="text-white">Starting camera...</p>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
+          <div className="text-center max-w-md px-6">
+            <h3 className="text-lg font-semibold text-white mb-2">Camera Access Required</h3>
+            <p className="text-gray-300 mb-4">{error}</p>
+            <button
+              type="button"
+              onClick={() => {
+                notifiedRef.current = false;
+                setError(null);
+                setIsStarting(true);
+                window.location.reload();
+              }}
+              className="px-6 py-3 bg-brand-mid text-white rounded-lg font-medium hover:bg-brand-dark transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!error && !isStarting && (
+        <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-medium z-10">
+          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+          Live
+        </div>
+      )}
     </div>
   );
 }

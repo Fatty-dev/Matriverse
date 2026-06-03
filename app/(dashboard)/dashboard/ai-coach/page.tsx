@@ -73,8 +73,8 @@ export default function AICoachPage() {
       <div className="flex flex-col flex-1 min-w-0">
         {/* Chat Header */}
         <div className="flex-shrink-0 border-b border-border bg-white">
-          <div className="px-6 py-4">
-            <div className="flex items-center gap-3">
+          <div className="px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
@@ -85,9 +85,9 @@ export default function AICoachPage() {
                 </svg>
               </button>
 
-              <div className="w-10 h-10 rounded-full bg-brand-mid flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-mid flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-5 h-5 sm:w-6 sm:h-6 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -100,21 +100,21 @@ export default function AICoachPage() {
                   />
                 </svg>
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-text">AI Pregnancy Coach</h1>
-                <p className="text-xs text-text-muted">Your 24/7 companion for pregnancy guidance</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-semibold text-text truncate">AI Pregnancy Coach</h1>
+                <p className="text-xs text-text-muted hidden sm:block">Your 24/7 companion for pregnancy guidance</p>
               </div>
             </div>
           </div>
 
           {/* Disclaimer Banner */}
-          <div className="px-6 pb-3">
-            <div className="flex items-start gap-2 p-3 bg-warning/5 border border-warning/20 rounded-lg">
+          <div className="px-4 sm:px-6 pb-3">
+            <div className="flex items-start gap-2 p-2 sm:p-3 bg-warning/5 border border-warning/20 rounded-lg">
               <svg className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-xs text-text-muted">
-                General guidance only. Always consult your healthcare provider for medical advice.
+                General guidance only. Consult your healthcare provider for medical advice.
               </p>
             </div>
           </div>

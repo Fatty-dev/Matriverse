@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated from @mediapipe/tasks-vision via npm run copy:mediapipe
+/public/mediapipe/

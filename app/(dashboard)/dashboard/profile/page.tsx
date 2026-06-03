@@ -43,32 +43,32 @@ export default async function ProfilePage() {
     <>
       <Header title="Scan & Profile" profile={profile} />
 
-      <main className="flex-1 px-8 sm:px-10 lg:px-12 py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text">My Profile</h1>
-          <p className="text-text-muted">Your pregnancy profile and health information</p>
+      <main className="flex-1 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-text">My Profile</h1>
+          <p className="text-sm sm:text-base text-text-muted">Your pregnancy profile and health information</p>
         </div>
 
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg shadow-brand-dark/5">
-          <CardContent className="p-6 lg:p-8">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
             {/* Profile Header */}
-            <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8 pb-8 border-b border-brand-light/30">
-              <div className="w-24 h-24 rounded-full bg-brand-light shrink-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-brand-dark">{initials}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-brand-light/30">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-brand-light shrink-0 flex items-center justify-center mx-auto sm:mx-0">
+                <span className="text-2xl sm:text-3xl font-bold text-brand-dark">{initials}</span>
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-text">{fullName}</h2>
-                <p className="text-text-muted">
+              <div className="flex-1 text-center sm:text-left">
+                <h2 className="text-xl sm:text-2xl font-bold text-text">{fullName}</h2>
+                <p className="text-sm sm:text-base text-text-muted">
                   {week ? `Week ${week} of Pregnancy` : "Pregnancy journey started"}
                 </p>
               </div>
-              <button className="px-6 py-2.5 border border-brand-mid text-brand-mid rounded-xl font-medium hover:bg-brand-mid hover:text-white transition-colors">
+              <button className="px-4 sm:px-6 py-2 sm:py-2.5 border border-brand-mid text-brand-mid rounded-xl font-medium hover:bg-brand-mid hover:text-white transition-colors text-sm sm:text-base w-full sm:w-auto">
                 Edit Profile
               </button>
             </div>
 
             {/* Profile Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <div className="flex items-center gap-3 p-4 bg-brand-surface rounded-xl">
                 <svg className="w-5 h-5 text-brand-mid" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

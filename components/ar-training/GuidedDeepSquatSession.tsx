@@ -7,8 +7,6 @@ import { useVoiceGuidance } from "@/hooks/useVoiceGuidance";
 import {
   analyzeSquatForm,
   calculateSquatDepth,
-  getHipCenter,
-  calculateDistance,
   PoseLandmark,
   type SquatFormMetrics,
 } from "@/lib/ar-training/pose-utils";
@@ -24,7 +22,6 @@ type CoachingPhase =
   | "check_visibility"
   | "check_distance"
   | "check_stance"
-  | "ready_to_start"
   | "active_training"
   | "session_complete";
 
@@ -46,11 +43,27 @@ export function GuidedDeepSquatSession() {
   const repStartTimeRef = useRef<number | null>(null);
   const lastCoachingMessageRef = useRef<string>("");
   const calibrationCheckRef = useRef<number>(0);
+  const lastFeedbackTimeRef = useRef<number>(0);
 
-  const { speak, stop: stopVoice } = useVoiceGuidance({
+  const { speak } = useVoiceGuidance({
     enabled: true,
-    rate: 0.9,
+    rate: 0.95,
   });
+
+  // Skip calibration and go directly to active training
+  const skipCalibration = useCallback(() => {
+    speak("Alright, let's start! Begin your squat when ready.", "high");
+    setCoachingMessage("Begin your squat - lower down slowly");
+    setCoachingPhase("active_training");
+    setPositionFeedback({ canSeeYou: true, distance: "good", stance: "good" });
+
+    // Initialize session
+    startARSession("deep_squat").then((result) => {
+      if (result.success && result.sessionId) {
+        setSessionId(result.sessionId);
+      }
+    });
+  }, [speak]);
 
   // Initial welcome message
   useEffect(() => {
@@ -68,14 +81,14 @@ export function GuidedDeepSquatSession() {
     (result: PoseDetectionResult) => {
       const { landmarks } = result;
 
-      // Check if we can see the person properly
+      // Check if we can see the person properly (lowered thresholds for better detection)
       const canSeeFullBody =
-        landmarks[PoseLandmark.LEFT_SHOULDER].visibility! > 0.7 &&
-        landmarks[PoseLandmark.RIGHT_SHOULDER].visibility! > 0.7 &&
-        landmarks[PoseLandmark.LEFT_HIP].visibility! > 0.7 &&
-        landmarks[PoseLandmark.RIGHT_HIP].visibility! > 0.7 &&
-        landmarks[PoseLandmark.LEFT_ANKLE].visibility! > 0.7 &&
-        landmarks[PoseLandmark.RIGHT_ANKLE].visibility! > 0.7;
+        landmarks[PoseLandmark.LEFT_SHOULDER].visibility! > 0.5 &&
+        landmarks[PoseLandmark.RIGHT_SHOULDER].visibility! > 0.5 &&
+        landmarks[PoseLandmark.LEFT_HIP].visibility! > 0.5 &&
+        landmarks[PoseLandmark.RIGHT_HIP].visibility! > 0.5 &&
+        landmarks[PoseLandmark.LEFT_ANKLE].visibility! > 0.4 &&
+        landmarks[PoseLandmark.RIGHT_ANKLE].visibility! > 0.4;
 
       // Calibration phases
       if (coachingPhase === "check_visibility") {
@@ -83,43 +96,40 @@ export function GuidedDeepSquatSession() {
           setPositionFeedback(prev => ({ ...prev, canSeeYou: true }));
           calibrationCheckRef.current++;
 
-          if (calibrationCheckRef.current > 10) { // Stable for ~10 frames
-            speak("Great! I can see you clearly. Now let's check your distance.", "medium");
+          if (calibrationCheckRef.current > 8) { // Stable for ~8 frames (faster)
+            speak("Great! I can see you clearly.", "medium");
             setCoachingMessage("Checking your position...");
             setCoachingPhase("check_distance");
             calibrationCheckRef.current = 0;
           }
         } else {
           setPositionFeedback(prev => ({ ...prev, canSeeYou: false }));
-          if (calibrationCheckRef.current > 30) {
-            setCoachingMessage("I can't see your full body. Step back or adjust the camera");
-          }
-          calibrationCheckRef.current++;
+          calibrationCheckRef.current = 0; // Reset counter when visibility lost
+          setCoachingMessage("I can't see your full body. Step back or adjust the camera");
         }
         return;
       }
 
       if (coachingPhase === "check_distance") {
-        // Check if person is at good distance (shoulder width in frame should be ~0.2-0.4)
+        // Check if person is at good distance (shoulder width in frame should be ~0.15-0.5)
         const shoulderWidth = Math.abs(
           landmarks[PoseLandmark.RIGHT_SHOULDER].x - landmarks[PoseLandmark.LEFT_SHOULDER].x
         );
 
-        let distanceStatus: "too_close" | "too_far" | "good" = "good";
-        if (shoulderWidth > 0.45) {
-          distanceStatus = "too_close";
+        if (shoulderWidth > 0.5) {
           setCoachingMessage("You're a bit too close. Take a step back");
           setPositionFeedback(prev => ({ ...prev, distance: "too_close" }));
-        } else if (shoulderWidth < 0.15) {
-          distanceStatus = "too_far";
+          calibrationCheckRef.current = 0;
+        } else if (shoulderWidth < 0.12) {
           setCoachingMessage("You're too far away. Take a step forward");
           setPositionFeedback(prev => ({ ...prev, distance: "too_far" }));
+          calibrationCheckRef.current = 0;
         } else {
           setPositionFeedback(prev => ({ ...prev, distance: "good" }));
           calibrationCheckRef.current++;
 
-          if (calibrationCheckRef.current > 15) {
-            speak("Perfect distance! Now let's check your stance.", "medium");
+          if (calibrationCheckRef.current > 8) {
+            speak("Good distance! Checking your stance.", "medium");
             setCoachingMessage("Checking your foot position...");
             setCoachingPhase("check_stance");
             calibrationCheckRef.current = 0;
@@ -129,7 +139,7 @@ export function GuidedDeepSquatSession() {
       }
 
       if (coachingPhase === "check_stance") {
-        // Check feet are shoulder-width apart
+        // Check feet are shoulder-width apart (more lenient)
         const hipWidth = Math.abs(
           landmarks[PoseLandmark.RIGHT_HIP].x - landmarks[PoseLandmark.LEFT_HIP].x
         );
@@ -139,48 +149,32 @@ export function GuidedDeepSquatSession() {
 
         const stanceRatio = feetWidth / hipWidth;
 
-        if (stanceRatio < 0.9) {
+        if (stanceRatio < 0.7) {
           setCoachingMessage("Spread your feet wider, about shoulder-width apart");
           setPositionFeedback(prev => ({ ...prev, stance: "too_narrow" }));
+          calibrationCheckRef.current = 0;
           if (lastCoachingMessageRef.current !== "narrow") {
-            speak("Spread your feet wider, shoulder-width apart", "medium");
+            speak("Feet wider apart", "medium");
             lastCoachingMessageRef.current = "narrow";
           }
-        } else if (stanceRatio > 1.8) {
-          setCoachingMessage("Bring your feet closer together");
+        } else if (stanceRatio > 2.0) {
+          setCoachingMessage("Bring your feet a bit closer together");
           setPositionFeedback(prev => ({ ...prev, stance: "too_wide" }));
+          calibrationCheckRef.current = 0;
           if (lastCoachingMessageRef.current !== "wide") {
-            speak("Bring your feet a bit closer", "medium");
+            speak("Feet a bit closer", "medium");
             lastCoachingMessageRef.current = "wide";
           }
         } else {
           setPositionFeedback(prev => ({ ...prev, stance: "good" }));
           calibrationCheckRef.current++;
 
-          if (calibrationCheckRef.current > 20) {
-            speak("Excellent! You're all set. Extend your arms forward and we'll begin.", "high");
-            setCoachingMessage("Raise your arms in front of you, then begin squatting when ready");
-            setCoachingPhase("ready_to_start");
-            calibrationCheckRef.current = 0;
-          }
-        }
-        return;
-      }
-
-      if (coachingPhase === "ready_to_start") {
-        // Check if arms are extended (wrists should be forward)
-        const leftWrist = landmarks[PoseLandmark.LEFT_WRIST];
-        const leftShoulder = landmarks[PoseLandmark.LEFT_SHOULDER];
-
-        const armsExtended = leftWrist.x > leftShoulder.x + 0.1; // Wrist forward of shoulder
-
-        if (armsExtended) {
-          calibrationCheckRef.current++;
           if (calibrationCheckRef.current > 10) {
-            // Start session
+            speak("You're all set! Start squatting when ready.", "high");
+            setCoachingMessage("Begin your squat when ready - lower down slowly");
             setCoachingPhase("active_training");
-            setCoachingMessage("Begin your squat - lower down slowly");
-            speak("Perfect! Now begin your first squat. Lower down slowly.", "high");
+            calibrationCheckRef.current = 0;
+            lastCoachingMessageRef.current = "";
 
             // Initialize session
             startARSession("deep_squat").then((result) => {
@@ -189,9 +183,6 @@ export function GuidedDeepSquatSession() {
               }
             });
           }
-        } else {
-          setCoachingMessage("Raise your arms in front of you to begin");
-          calibrationCheckRef.current = 0;
         }
         return;
       }
@@ -202,63 +193,98 @@ export function GuidedDeepSquatSession() {
         setFormMetrics(metrics);
 
         const depth = calculateSquatDepth(landmarks);
+        const now = Date.now();
+
+        // Throttle voice feedback (min 1.5s between messages)
+        const canSpeak = now - lastFeedbackTimeRef.current > 1500;
 
         // Squat phase detection with coaching
         let newPhase = currentPhase;
         let message = coachingMessage;
 
-        if (currentPhase === "standing" && depth > 20) {
+        if (currentPhase === "standing" && depth > 15) {
           newPhase = "descending";
           repStartTimeRef.current = Date.now();
-          message = "Going down... keep your back straight";
-          speak("Lower down slowly", "low");
+          message = "Going down... nice and controlled";
+          if (canSpeak) {
+            speak("That's it, lower down slowly", "medium");
+            lastFeedbackTimeRef.current = now;
+          }
         } else if (currentPhase === "descending") {
           // Check if they went back up without reaching depth
-          if (depth < 10) {
+          if (depth < 8) {
             newPhase = "standing";
-            message = "You didn't go deep enough. Try again!";
-            speak("Go deeper on the next one", "medium");
-            repStartTimeRef.current = null;
-          } else if (depth < 40) {
-            message = `Keep going down - ${Math.round(depth)}% depth`;
-          } else if (depth < 60) {
-            message = `Good progress - ${Math.round(depth)}% depth, go deeper`;
-            if (lastCoachingMessageRef.current !== "halfway") {
-              speak("Halfway there, keep going", "medium");
-              lastCoachingMessageRef.current = "halfway";
+            message = "Not deep enough - try again, you got this!";
+            if (canSpeak) {
+              speak("Go a bit deeper on this one", "medium");
+              lastFeedbackTimeRef.current = now;
             }
-          } else if (depth < 80) {
-            message = `Almost there - ${Math.round(depth)}% depth`;
-          } else if (depth >= 80) {
+            repStartTimeRef.current = null;
+            lastCoachingMessageRef.current = "";
+          } else if (depth < 30) {
+            message = `Keep going down... ${Math.round(depth)}%`;
+          } else if (depth < 50) {
+            message = `Looking good! ${Math.round(depth)}% - keep going`;
+            if (lastCoachingMessageRef.current !== "progress" && canSpeak) {
+              speak("Good, keep lowering", "low");
+              lastCoachingMessageRef.current = "progress";
+              lastFeedbackTimeRef.current = now;
+            }
+          } else if (depth < 70) {
+            message = `Great depth! ${Math.round(depth)}% - almost there`;
+            if (lastCoachingMessageRef.current !== "almost" && canSpeak) {
+              speak("Almost there!", "medium");
+              lastCoachingMessageRef.current = "almost";
+              lastFeedbackTimeRef.current = now;
+            }
+          } else if (depth >= 70) {
             newPhase = "bottom";
-            message = "Perfect depth! Now push back up";
-            speak("Excellent depth! Now stand back up", "high");
+            message = "Beautiful! Now push back up!";
+            if (canSpeak) {
+              speak("Perfect! Now stand back up", "high");
+              lastFeedbackTimeRef.current = now;
+            }
             lastCoachingMessageRef.current = "";
           }
 
-          // Real-time form corrections
-          if (metrics.hasKneeValgus) {
-            message = "⚠️ Push your knees outward!";
-            if (lastCoachingMessageRef.current !== "knees") {
-              speak("Push your knees out to the sides", "high");
+          // Real-time form corrections (only if not already giving depth feedback)
+          if (metrics.hasKneeValgus && lastCoachingMessageRef.current !== "knees") {
+            message = "Push your knees outward!";
+            if (canSpeak) {
+              speak("Knees out!", "high");
               lastCoachingMessageRef.current = "knees";
+              lastFeedbackTimeRef.current = now;
             }
-          } else if (metrics.torsoLean > 50) {
-            message = "⚠️ Keep your chest up, don't lean forward too much";
-            if (lastCoachingMessageRef.current !== "lean") {
-              speak("Keep your chest up", "medium");
+          } else if (metrics.torsoLean > 45 && lastCoachingMessageRef.current !== "lean") {
+            message = "Chest up! Don't lean forward";
+            if (canSpeak) {
+              speak("Chest up!", "medium");
               lastCoachingMessageRef.current = "lean";
+              lastFeedbackTimeRef.current = now;
             }
           }
-        } else if (currentPhase === "bottom" && depth < 70) {
-          newPhase = "ascending";
-          message = "Pushing up... drive through your heels";
-          speak("Good, keep going up", "low");
-        } else if (currentPhase === "ascending" && depth < 20) {
-          newPhase = "standing";
-          // Rep completed!
-          completeRep(metrics, repStartTimeRef.current || Date.now());
-          message = `Rep ${currentRep + 1} complete! Get ready for the next one`;
+        } else if (currentPhase === "bottom") {
+          if (depth < 60) {
+            newPhase = "ascending";
+            message = "Pushing up... drive through your heels!";
+            if (canSpeak) {
+              speak("Push through your heels", "low");
+              lastFeedbackTimeRef.current = now;
+            }
+          } else {
+            // Still at bottom
+            message = "Hold it... now push up!";
+          }
+        } else if (currentPhase === "ascending") {
+          if (depth < 15) {
+            newPhase = "standing";
+            // Rep completed!
+            completeRep(metrics, repStartTimeRef.current || Date.now());
+            message = `Nice! Rep ${currentRep + 1} done! Ready for the next one`;
+            lastCoachingMessageRef.current = "";
+          } else {
+            message = `Coming up... ${100 - Math.round(depth)}% to go`;
+          }
         }
 
         setCurrentPhase(newPhase);
@@ -299,15 +325,22 @@ export function GuidedDeepSquatSession() {
         );
       }
 
-      // Performance feedback
+      // Performance feedback with variety
+      const excellentPhrases = ["Outstanding!", "Perfect form!", "That was beautiful!", "Incredible!"];
+      const goodPhrases = ["Great job!", "Nice one!", "Well done!", "Looking strong!"];
+      const okPhrases = ["Good effort!", "Keep it up!", "You're doing great!", "Nice work!"];
+
       if (metrics.overallScore >= 90) {
-        speak(`Rep ${newRep} complete! Outstanding form!`, "high");
-      } else if (metrics.overallScore >= 80) {
-        speak(`Rep ${newRep} complete! Excellent work!`, "high");
-      } else if (metrics.overallScore >= 60) {
-        speak(`Rep ${newRep} done. Try to go a bit deeper next time`, "medium");
+        const phrase = excellentPhrases[newRep % excellentPhrases.length];
+        speak(`${phrase} Rep ${newRep}!`, "high");
+      } else if (metrics.overallScore >= 75) {
+        const phrase = goodPhrases[newRep % goodPhrases.length];
+        speak(`${phrase} Rep ${newRep}!`, "high");
+      } else if (metrics.overallScore >= 50) {
+        const phrase = okPhrases[newRep % okPhrases.length];
+        speak(`${phrase}`, "medium");
       } else {
-        speak(`Rep ${newRep} complete. Focus on your form`, "medium");
+        speak(`Rep ${newRep}. Try going deeper!`, "medium");
       }
 
       repStartTimeRef.current = null;
@@ -347,7 +380,7 @@ export function GuidedDeepSquatSession() {
           <p className="text-xl font-semibold text-center">{coachingMessage}</p>
 
           {/* Calibration checklist */}
-          {coachingPhase !== "active_training" && (
+          {coachingPhase !== "active_training" && coachingPhase !== "session_complete" && (
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <div className={`w-4 h-4 rounded-full ${positionFeedback.canSeeYou ? 'bg-green-400' : 'bg-gray-400'}`} />
@@ -361,24 +394,29 @@ export function GuidedDeepSquatSession() {
                 <div className={`w-4 h-4 rounded-full ${positionFeedback.stance === 'good' ? 'bg-green-400' : 'bg-gray-400'}`} />
                 <span>Feet shoulder-width apart</span>
               </div>
+
+              {/* Skip calibration button */}
+              <button
+                onClick={skipCalibration}
+                className="mt-3 w-full py-2 px-4 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Skip Setup & Start Now
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* MediaPipe Status Indicator */}
+      {/* Pose tracking status */}
       <div className="absolute bottom-24 left-4 z-40 bg-black/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg border-2 border-cyan-400">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
-            <span className="text-sm font-semibold">MediaPipe Active</span>
-          </div>
-          <div className="text-xs text-gray-300">
-            33 landmarks tracked
-          </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${positionFeedback.canSeeYou ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'}`}></div>
+          <span className="text-sm font-semibold">
+            {positionFeedback.canSeeYou ? "Tracking Active" : "Waiting for pose"}
+          </span>
         </div>
         <div className="text-xs text-cyan-300 mt-1">
-          {positionFeedback.canSeeYou ? "✓ Tracking your pose" : "⚠ Position yourself in frame"}
+          {positionFeedback.canSeeYou ? "Your pose is being tracked" : "Position yourself in frame"}
         </div>
       </div>
 

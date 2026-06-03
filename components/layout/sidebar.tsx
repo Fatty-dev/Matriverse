@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { logout } from "@/app/actions/auth";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 type NavItem = {
   name: string;
@@ -151,15 +152,43 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isOpen, close } = useSidebar();
 
-  return (
-    <aside className="w-64 bg-white border-r border-border h-screen fixed top-0 left-0 flex flex-col z-40">
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-border">
+      <div className="px-6 py-5 border-b border-border flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-3">
           <img src="/matriverse_logo_purple.png" alt="MatriVerse" className="h-10" />
           <span className="text-xl font-bold text-brand-dark">MatriVerse</span>
         </Link>
+        {/* Close button - only visible on mobile */}
+        <button
+          onClick={close}
+          className="lg:hidden p-2 rounded-lg hover:bg-brand-surface text-text-muted transition-colors"
+          aria-label="Close menu"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Navigation */}
@@ -234,6 +263,33 @@ export function Sidebar() {
           </button>
         </form>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar - always visible on lg+ */}
+      <aside className="hidden lg:flex w-64 bg-white border-r border-border h-screen fixed top-0 left-0 flex-col z-40">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Sidebar Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Sidebar Drawer */}
+      <aside
+        className={`fixed top-0 left-0 h-screen w-72 bg-white border-r border-border flex flex-col z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

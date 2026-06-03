@@ -12,10 +12,10 @@ export default async function ReportsPage() {
     <>
       <Header title="Reports" profile={profile} />
 
-      <main className="flex-1 px-8 sm:px-10 lg:px-12 py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text">Reports</h1>
-          <p className="text-text-muted">Download and manage your pregnancy reports</p>
+      <main className="flex-1 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-text">Reports</h1>
+          <p className="text-sm sm:text-base text-text-muted">Download and manage your pregnancy reports</p>
         </div>
 
         <ReportsClient initialReports={reports} />

@@ -20,17 +20,17 @@ export default async function ScansPage({ searchParams }: ScansPageProps) {
     <>
       <Header title="My Scans" profile={profile} />
 
-      <main className="flex-1 px-8 sm:px-10 lg:px-12 py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
+      <main className="flex-1 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
         {/* Onboarding Banner */}
         {isOnboarding && !hasUploadedScan && (
           <OnboardingScanPrompt />
         )}
 
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-text">My Scans</h1>
-              <p className="text-text-muted">Upload and view your ultrasound scans and medical images</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-text">My Scans</h1>
+              <p className="text-sm sm:text-base text-text-muted">Upload and view your ultrasound scans and medical images</p>
             </div>
           </div>
         </div>

@@ -3,14 +3,24 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Camera } from "./Camera";
+import { CalibrationOverlay } from "./CalibrationOverlay";
 import { PoseDetector } from "./PoseDetector";
 import { useVoiceGuidance } from "@/hooks/useVoiceGuidance";
 import {
   analyzeSquatForm,
   calculateSquatDepth,
+  getFullBodyVisibilityScore,
   PoseLandmark,
   type SquatFormMetrics,
 } from "@/lib/ar-training/pose-utils";
+import {
+  getArmsPoseScore,
+  getFeetGuideHint,
+  isArmsPoseGood,
+  isStanceGood,
+  type FeetGuideHint,
+} from "@/lib/ar-training/calibration-metrics";
+import { StableBoolean } from "@/lib/ar-training/stable-signal";
 import type { PoseDetectionResult, SquatPhase, RepData } from "@/types/ar-training";
 import {
   startARSession,
@@ -40,13 +50,29 @@ export function SimpleGuidedSquat() {
   const [countdown, setCountdown] = useState(3);
 
   const [canSeeYou, setCanSeeYou] = useState(false);
+  const [positionProgress, setPositionProgress] = useState(0);
+  const [holdProgress, setHoldProgress] = useState(0);
   const [feetOk, setFeetOk] = useState(false);
+  const [feetLockProgress, setFeetLockProgress] = useState(0);
+  const [feetHoldProgress, setFeetHoldProgress] = useState(0);
   const [armsOk, setArmsOk] = useState(false);
+  const [armsLockProgress, setArmsLockProgress] = useState(0);
+  const [armsHoldProgress, setArmsHoldProgress] = useState(0);
+  const [isPoseReady, setIsPoseReady] = useState(false);
+  const [poseError, setPoseError] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const repStartTimeRef = useRef<number | null>(null);
   const phaseCheckCountRef = useRef<number>(0);
   const lastMessageRef = useRef<string>("");
+  const canSeeYouSignalRef = useRef(new StableBoolean(12, 8));
+  const feetOkSignalRef = useRef(new StableBoolean(14, 10));
+  const armsOkSignalRef = useRef(new StableBoolean(14, 10));
+  const lastFeetHintRef = useRef<FeetGuideHint | null>(null);
+  const lastArmsHintTierRef = useRef(0);
+  const POSITION_HOLD_FRAMES = 24;
+  const FEET_HOLD_FRAMES = 22;
+  const ARMS_HOLD_FRAMES = 22;
 
   const { speak } = useVoiceGuidance({ enabled: true, rate: 0.9 });
 
@@ -87,30 +113,36 @@ export function SimpleGuidedSquat() {
     (result: PoseDetectionResult) => {
       const { landmarks } = result;
 
-      // Check visibility
-      const fullBodyVisible =
-        landmarks[PoseLandmark.LEFT_SHOULDER].visibility! > 0.7 &&
-        landmarks[PoseLandmark.RIGHT_SHOULDER].visibility! > 0.7 &&
-        landmarks[PoseLandmark.LEFT_HIP].visibility! > 0.7 &&
-        landmarks[PoseLandmark.RIGHT_HIP].visibility! > 0.7 &&
-        landmarks[PoseLandmark.LEFT_ANKLE].visibility! > 0.7 &&
-        landmarks[PoseLandmark.RIGHT_ANKLE].visibility! > 0.7;
-
-      setCanSeeYou(fullBodyVisible);
+      const visibilityScore = getFullBodyVisibilityScore(landmarks);
+      const fullBodyVisible = visibilityScore >= 0.42;
+      const canSeeYouStable = canSeeYouSignalRef.current.update(fullBodyVisible);
+      setCanSeeYou(canSeeYouStable);
+      setPositionProgress(canSeeYouSignalRef.current.getOnProgress());
 
       // PHASE: Position yourself
       if (phase === "position_yourself") {
-        if (fullBodyVisible) {
+        if (canSeeYouStable) {
           phaseCheckCountRef.current++;
-          if (phaseCheckCountRef.current > 15) {
+          const holdRatio = Math.min(
+            1,
+            phaseCheckCountRef.current / POSITION_HOLD_FRAMES
+          );
+          setHoldProgress(holdRatio);
+          if (holdRatio < 1) {
+            setMessage(`Hold still… ${Math.round(holdRatio * 100)}%`);
+          } else {
             speak("Perfect! I can see you. Now check your feet.", "medium");
             setMessage("Spread your feet shoulder-width apart");
             setPhase("check_feet");
             phaseCheckCountRef.current = 0;
+            feetOkSignalRef.current.reset();
           }
         } else {
-          phaseCheckCountRef.current = 0;
-          setMessage("Step back a bit more");
+          setHoldProgress(0);
+          if (!fullBodyVisible) {
+            phaseCheckCountRef.current = 0;
+            setMessage("Step back so I can see your whole body");
+          }
         }
         return;
       }
@@ -123,46 +155,81 @@ export function SimpleGuidedSquat() {
         const feetWidth = Math.abs(
           landmarks[PoseLandmark.RIGHT_ANKLE].x - landmarks[PoseLandmark.LEFT_ANKLE].x
         );
-        const stanceRatio = feetWidth / hipWidth;
+        const stanceRatio = hipWidth > 0.01 ? feetWidth / hipWidth : 0;
 
-        if (stanceRatio >= 0.9 && stanceRatio <= 1.8) {
-          setFeetOk(true);
+        const feetStable = feetOkSignalRef.current.update(isStanceGood(stanceRatio));
+        setFeetOk(feetStable);
+        setFeetLockProgress(feetOkSignalRef.current.getOnProgress());
+
+        if (feetStable) {
           phaseCheckCountRef.current++;
-          if (phaseCheckCountRef.current > 20) {
-            speak("Good! Now raise your arms straight forward.", "medium");
-            setMessage("Raise your arms straight in front of you");
+          const holdRatio = Math.min(1, phaseCheckCountRef.current / FEET_HOLD_FRAMES);
+          setFeetHoldProgress(holdRatio);
+          if (holdRatio < 1) {
+            setMessage(`Great stance — hold… ${Math.round(holdRatio * 100)}%`);
+          } else {
+            speak("Good! Now raise your arms out in front of you.", "medium");
+            setMessage("Raise your arms forward, about shoulder height");
             setPhase("arms_ready");
             phaseCheckCountRef.current = 0;
+            setFeetHoldProgress(0);
+            armsOkSignalRef.current.reset();
+            lastFeetHintRef.current = null;
           }
-        } else if (stanceRatio < 0.9) {
-          setFeetOk(false);
-          setMessage("👣 Spread your feet wider");
         } else {
-          setFeetOk(false);
-          setMessage("👣 Bring your feet closer together");
+          setFeetHoldProgress(0);
+          phaseCheckCountRef.current = 0;
+          const hint = getFeetGuideHint(stanceRatio);
+          if (hint !== lastFeetHintRef.current) {
+            lastFeetHintRef.current = hint;
+            if (hint === "wider") {
+              setMessage("Spread your feet a little wider");
+            } else if (hint === "closer") {
+              setMessage("Bring your feet a little closer");
+            } else {
+              setMessage("Almost — adjust your stance slowly");
+            }
+          }
         }
         return;
       }
 
       // PHASE: Arms ready
       if (phase === "arms_ready") {
-        const leftWrist = landmarks[PoseLandmark.LEFT_WRIST];
-        const leftShoulder = landmarks[PoseLandmark.LEFT_SHOULDER];
-        const armsForward = leftWrist.x > leftShoulder.x + 0.1;
+        const armsGood = isArmsPoseGood(landmarks);
+        const armsStable = armsOkSignalRef.current.update(armsGood);
+        setArmsOk(armsStable);
+        setArmsLockProgress(armsOkSignalRef.current.getOnProgress());
 
-        if (armsForward) {
-          setArmsOk(true);
+        if (armsStable) {
           phaseCheckCountRef.current++;
-          if (phaseCheckCountRef.current > 10) {
+          const holdRatio = Math.min(1, phaseCheckCountRef.current / ARMS_HOLD_FRAMES);
+          setArmsHoldProgress(holdRatio);
+          if (holdRatio < 1) {
+            setMessage(`Perfect arms — hold… ${Math.round(holdRatio * 100)}%`);
+          } else {
             speak("Excellent! Starting in 3... 2... 1...", "high");
             setMessage("Get ready!");
             setPhase("counting_down");
             setCountdown(3);
+            phaseCheckCountRef.current = 0;
+            setArmsHoldProgress(0);
           }
         } else {
-          setArmsOk(false);
-          setMessage("🙌 Raise your arms forward");
+          setArmsHoldProgress(0);
           phaseCheckCountRef.current = 0;
+          const score = getArmsPoseScore(landmarks);
+          const tier = score < 0.45 ? 1 : score < 0.7 ? 2 : 3;
+          if (tier !== lastArmsHintTierRef.current) {
+            lastArmsHintTierRef.current = tier;
+            if (tier === 1) {
+              setMessage("Raise both arms forward, about shoulder height");
+            } else if (tier === 2) {
+              setMessage("Straighten your arms a bit more in front of you");
+            } else {
+              setMessage("Almost there — keep arms forward and steady");
+            }
+          }
         }
         return;
       }
@@ -179,7 +246,7 @@ export function SimpleGuidedSquat() {
         if (squatPhase === "standing" && depth > 20) {
           newPhase = "descending";
           repStartTimeRef.current = Date.now();
-          msg = "⬇️ Going down... keep going";
+          msg = "Going down... keep going";
           speak("Go down", "low");
         } else if (squatPhase === "descending") {
           if (depth < 10) {
@@ -188,12 +255,12 @@ export function SimpleGuidedSquat() {
             msg = "Try to go deeper on the next one!";
             repStartTimeRef.current = null;
           } else if (depth < 50) {
-            msg = `⬇️ Keep going down (${Math.round(depth)}%)`;
+            msg = `Keep going down (${Math.round(depth)}%)`;
           } else if (depth < 80) {
-            msg = `⬇️ Almost there! Go deeper (${Math.round(depth)}%)`;
+            msg = `Almost there! Go deeper (${Math.round(depth)}%)`;
           } else if (depth >= 80) {
             newPhase = "bottom";
-            msg = "✓ Perfect! Now stand back up";
+            msg = "Perfect! Now stand back up";
             speak("Great depth! Come back up", "high");
           }
 
@@ -207,11 +274,11 @@ export function SimpleGuidedSquat() {
           }
         } else if (squatPhase === "bottom" && depth < 70) {
           newPhase = "ascending";
-          msg = "⬆️ Coming up... push through your heels";
+          msg = "Coming up... push through your heels";
         } else if (squatPhase === "ascending" && depth < 20) {
           newPhase = "standing";
           completeRep(metrics, repStartTimeRef.current || Date.now());
-          msg = "✓ Well done! Ready for the next one?";
+          msg = "Well done! Ready for the next one?";
           lastMessageRef.current = "";
         }
 
@@ -287,16 +354,36 @@ export function SimpleGuidedSquat() {
           mirrored={true}
         />
 
-        {/* Simple overlay - no technical stuff */}
-        <canvas ref={canvasRef} className="hidden" />
+        {/* Canvas for pose skeleton overlay */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ zIndex: 20 }}
+        />
 
         {videoElement && (
           <PoseDetector
             videoElement={videoElement}
             onPoseDetected={handlePoseDetected}
-            enableDrawing={false}
+            onReady={() => setIsPoseReady(true)}
+            onError={(err) => setPoseError(err.message)}
+            enableDrawing={true}
             canvasRef={canvasRef}
+            mirrored={true}
           />
+        )}
+
+        {videoElement && !isPoseReady && !poseError && (
+          <div className="absolute top-4 right-4 z-50 bg-yellow-500/90 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            <span className="text-sm font-medium">Loading pose tracking...</span>
+          </div>
+        )}
+
+        {poseError && (
+          <div className="absolute top-4 right-4 z-50 bg-red-500/90 text-white px-4 py-2 rounded-lg max-w-sm">
+            <span className="text-sm font-medium">Pose tracking: {poseError}</span>
+          </div>
         )}
 
         {/* Big, clear message */}
@@ -308,7 +395,7 @@ export function SimpleGuidedSquat() {
               </div>
             </div>
           ) : (
-            <div className="bg-gradient-to-r from-purple-600/95 to-pink-600/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border-4 border-white/30">
+            <div className="bg-gradient-to-r from-purple-600/95 to-pink-600/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border-4 border-white/30 transition-all duration-300">
               <p className="text-4xl font-bold text-white text-center leading-tight">
                 {message}
               </p>
@@ -316,80 +403,81 @@ export function SimpleGuidedSquat() {
           )}
         </div>
 
-        {/* Dynamic positioning feedback - no rigid shapes */}
         {phase === "position_yourself" && (
-          <>
-            {/* Success state - big checkmark */}
-            {canSeeYou ? (
-              <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                <div className="text-center">
-                  <div className="w-48 h-48 rounded-full bg-green-400/30 border-8 border-green-400 flex items-center justify-center animate-pulse">
-                    <span className="text-9xl">✓</span>
-                  </div>
-                  <div className="text-white text-5xl font-bold mt-8">Perfect!</div>
-                </div>
+          <CalibrationOverlay
+            success={canSeeYou}
+            successTitle="You're in frame"
+            holdProgress={holdProgress}
+            lockProgress={positionProgress}
+          >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-4 border-white/60 flex items-center justify-center">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </div>
-            ) : (
-              /* Guidance arrows and indicators */
-              <div className="absolute inset-0 z-30 pointer-events-none">
-                {/* Directional indicators */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  {/* Step back indicator */}
-                  <div className="flex flex-col items-center gap-6">
-                    <div className="text-white text-7xl animate-bounce">⬆️</div>
-                    <div className="text-white text-4xl font-bold bg-black/60 px-8 py-4 rounded-2xl">
-                      Step Back
-                    </div>
-                    <div className="text-white/80 text-2xl">Move until I can see your whole body</div>
-                  </div>
-                </div>
-
-                {/* Corner guides to show frame */}
-                <div className="absolute top-8 left-8 w-24 h-24 border-l-8 border-t-8 border-white/50"></div>
-                <div className="absolute top-8 right-8 w-24 h-24 border-r-8 border-t-8 border-white/50"></div>
-                <div className="absolute bottom-8 left-8 w-24 h-24 border-l-8 border-b-8 border-white/50"></div>
-                <div className="absolute bottom-8 right-8 w-24 h-24 border-r-8 border-b-8 border-white/50"></div>
-              </div>
-            )}
-          </>
+              <p className="text-white text-3xl font-bold bg-black/60 px-6 py-3 rounded-2xl">
+                Step back — show your full body
+              </p>
+            </div>
+            <div className="absolute top-8 left-8 w-20 h-20 border-l-4 border-t-4 border-white/40" />
+            <div className="absolute top-8 right-8 w-20 h-20 border-r-4 border-t-4 border-white/40" />
+            <div className="absolute bottom-8 left-8 w-20 h-20 border-l-4 border-b-4 border-white/40" />
+            <div className="absolute bottom-8 right-8 w-20 h-20 border-r-4 border-b-4 border-white/40" />
+          </CalibrationOverlay>
         )}
 
-        {/* Feet guide - dynamic feedback */}
         {phase === "check_feet" && (
-          <div className="absolute inset-0 z-30 pointer-events-none">
-            {feetOk ? (
-              /* Perfect stance */
-              <div className="absolute bottom-32 left-1/2 -translate-x-1/2 text-center">
-                <div className="w-32 h-32 rounded-full bg-green-400/30 border-8 border-green-400 flex items-center justify-center mb-4 animate-pulse">
-                  <span className="text-7xl">✓</span>
-                </div>
-                <div className="text-white text-4xl font-bold">Great stance!</div>
-              </div>
-            ) : (
-              /* Visual feet indicators with arrows */
-              <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end pb-12">
-                <div className="relative">
-                  {/* Animated arrows showing to spread */}
-                  <div className="flex items-center gap-48">
-                    <div className="text-center">
-                      <div className="text-7xl animate-pulse">⬅️</div>
-                      <div className="text-8xl mt-4">👣</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-7xl animate-pulse">➡️</div>
-                      <div className="text-8xl mt-4">👣</div>
-                    </div>
+          <CalibrationOverlay
+            success={feetOk}
+            successTitle="Great stance!"
+            holdProgress={feetHoldProgress}
+            lockProgress={feetLockProgress}
+          >
+            <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end pb-16">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-16 mb-6">
+                  <div className="w-12 h-12 rounded-full border-3 border-white/60 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-white/80" />
                   </div>
-                  {/* Distance indicator */}
-                  <div className="absolute -top-20 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <div className="text-white text-3xl font-bold bg-black/60 px-6 py-3 rounded-2xl">
-                      Shoulder-width apart ↔️
-                    </div>
+                  <div className="text-white text-2xl font-semibold bg-black/50 px-5 py-2 rounded-xl">
+                    Shoulder-width apart
+                  </div>
+                  <div className="w-12 h-12 rounded-full border-3 border-white/60 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-white/80" />
                   </div>
                 </div>
+                <div className="mx-auto w-48 h-1 bg-white/30 rounded-full relative">
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white" />
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/60" />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/60" />
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          </CalibrationOverlay>
+        )}
+
+        {phase === "arms_ready" && (
+          <CalibrationOverlay
+            success={armsOk}
+            successTitle="Arms ready!"
+            holdProgress={armsHoldProgress}
+            lockProgress={armsLockProgress}
+          >
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full border-4 border-white/60 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h4m12 0h-4m-4-4v4m0 8v4M8 12h8" />
+                  </svg>
+                </div>
+                <p className="text-white text-3xl font-bold bg-black/50 px-6 py-3 rounded-2xl">
+                  Arms forward, shoulder height
+                </p>
+                <p className="text-white/70 text-lg mt-3">Keep a comfortable width between your hands</p>
+              </div>
+            </div>
+          </CalibrationOverlay>
         )}
 
         {/* Rep counter */}

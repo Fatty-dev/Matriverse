@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import { getProfile } from "@/app/actions/profile";
 
 export default async function DashboardLayout({
@@ -24,9 +25,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-bg">
-      <Sidebar />
-      <div className="ml-64 flex-1 flex flex-col">{children}</div>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-bg">
+        <Sidebar />
+        <div className="lg:ml-64 flex-1 flex flex-col min-h-screen">{children}</div>
+      </div>
+    </SidebarProvider>
   );
 }
