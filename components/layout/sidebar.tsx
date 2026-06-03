@@ -157,9 +157,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-6 py-5 border-b border-border">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-mid rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">M</span>
-          </div>
+          <img src="/matriverse_logo_purple.png" alt="MatriVerse" className="h-10" />
           <span className="text-xl font-bold text-brand-dark">MatriVerse</span>
         </Link>
       </div>

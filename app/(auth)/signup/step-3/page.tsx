@@ -9,9 +9,7 @@ export default function SignupStep3Page() {
       <div className="fixed inset-y-0 left-0 hidden bg-brand-dark lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <span className="w-3 h-3 rounded-full bg-white" />
-          </div>
+          <img src="/matriverse_logo_white.png" alt="MatriVerse" className="h-14" />
           <span className="text-xl font-bold text-white">MatriVerse</span>
         </Link>
 
@@ -43,9 +41,7 @@ export default function SignupStep3Page() {
         {/* Mobile Header */}
         <div className="px-6 py-5 lg:hidden">
           <Link href="/" className="inline-flex items-center gap-3">
-            <div className="w-10 h-10 bg-brand-mid rounded-xl flex items-center justify-center">
-              <span className="w-3 h-3 rounded-full bg-white" />
-            </div>
+            <img src="/matriverse_logo_purple.png" alt="MatriVerse" className="h-14" />
             <span className="text-xl font-bold text-brand-dark">MatriVerse</span>
           </Link>
         </div>

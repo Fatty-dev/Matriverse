@@ -10,7 +10,10 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(ls:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(pnpm add:*)",
+      "Bash(yarn add:*)",
+      "Bash(/usr/local/bin/npm install framer-motion)"
     ]
   }
 }
