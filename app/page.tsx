@@ -249,19 +249,19 @@ export default function LandingPage() {
     <div className="min-h-screen bg-bg">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-8 lg:px-16 py-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-16 py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <img
                 src={scrolledPastHero ? "/matriverse_logo_purple.png" : "/matriverse_logo_white.png"}
                 alt="MatriVerse"
-                className="h-12 transition-all duration-300"
+                className="h-8 sm:h-12 transition-all duration-300"
               />
-              <span className={`text-2xl font-bold transition-colors duration-300 ${scrolledPastHero ? 'text-brand-accent' : 'text-white'}`}>MatriVerse</span>
+              <span className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${scrolledPastHero ? 'text-brand-accent' : 'text-white'}`}>MatriVerse</span>
             </div>
             <button
               onClick={() => setMenuOpen(true)}
-              className={`px-10 py-2.5 rounded-full text-sm font-medium transition-all shadow-lg hover:shadow-xl ${
+              className={`px-6 sm:px-10 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all shadow-lg hover:shadow-xl ${
                 scrolledPastHero
                   ? 'bg-brand-accent text-white hover:opacity-90'
                   : 'bg-purple-400 text-white hover:bg-purple-500 shadow-purple-400/25'
@@ -288,26 +288,26 @@ export default function LandingPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="bg-gradient-to-br from-purple-500 via-purple-400 to-purple-600 rounded-[3rem] p-12 max-w-lg w-full mx-4 relative"
+              className="bg-gradient-to-br from-purple-500 via-purple-400 to-purple-600 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 max-w-lg w-full mx-4 relative max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={() => setMenuOpen(false)}
-                className="absolute top-6 right-6 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               >
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
 
               {/* Menu Links */}
-              <nav className="space-y-4 mt-8">
+              <nav className="space-y-3 sm:space-y-4 mt-6 sm:mt-8">
                 {sectionLinks.map((link, idx) => (
                   <motion.button
                     key={idx}
                     onClick={() => scrollToSection(link.href)}
-                    className="block w-full text-left text-white text-3xl font-bold hover:text-white/80 transition-colors py-2"
+                    className="block w-full text-left text-white text-xl sm:text-3xl font-bold hover:text-white/80 transition-colors py-1.5 sm:py-2"
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: idx * 0.1 }}
@@ -322,14 +322,14 @@ export default function LandingPage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-10"
+                className="mt-8 sm:mt-10"
               >
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-white text-brand-dark rounded-full font-semibold text-lg hover:bg-gray-100 transition-all shadow-xl"
+                  className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-white text-brand-dark rounded-full font-semibold text-base sm:text-lg hover:bg-gray-100 transition-all shadow-xl"
                 >
                   Get Started
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </Link>
@@ -347,8 +347,8 @@ export default function LandingPage() {
       >
         {/* Blur gradient at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-black/40 via-transparent to-transparent backdrop-blur-sm pointer-events-none" />
-        <div className="relative max-w-[1400px] mx-auto px-8 lg:px-16 pb-20 pt-32 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-end">
+        <div className="relative max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-16 pb-12 sm:pb-20 pt-24 sm:pt-32 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-end">
             {/* Left Side - Heading */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -356,7 +356,7 @@ export default function LandingPage() {
               transition={{ duration: 0.8 }}
               className="relative z-10"
             >
-              <h1 className="text-7xl sm:text-8xl lg:text-9xl font-black leading-[0.95]">
+              <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-[0.95]">
                 <span className="text-white">Prepared.</span>
                 <br />
                 <span className="text-brand-accent">Confident.</span>
@@ -370,16 +370,16 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative z-10 flex flex-col justify-end items-end"
+              className="relative z-10 flex flex-col justify-end items-start lg:items-end"
             >
               <div className="max-w-md">
-                <p className="text-lg text-white mb-6 leading-relaxed" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+                <p className="text-base sm:text-lg text-white mb-6 leading-relaxed" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
                   <span className="font-semibold">Your first pregnancy</span> is a journey that deserves expert guidance. Personalized coaching, AR-assisted labor preparation, and <span className="font-semibold">24/7 support</span> — all in one place.
                 </p>
 
                 <button
                   onClick={() => window.location.href = '/signup'}
-                  className="group px-8 py-4 bg-white text-brand-dark rounded-full font-semibold text-base hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl flex items-center gap-3"
+                  className="group px-6 sm:px-8 py-3 sm:py-4 bg-white text-brand-dark rounded-full font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl flex items-center gap-3"
                 >
                   Start Your Journey
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -393,9 +393,9 @@ export default function LandingPage() {
       </section>
 
       {/* AR Experience Section */}
-      <section id="ar" className="py-28 relative overflow-hidden bg-white">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <section id="ar" className="py-16 sm:py-28 relative overflow-hidden bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
             {/* Left Side - Content */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -404,14 +404,14 @@ export default function LandingPage() {
               transition={{ duration: 0.6 }}
             >
               <p className="text-sm font-semibold text-brand-accent uppercase tracking-wider mb-3">AR TECHNOLOGY</p>
-              <h2 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight text-text">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-5 leading-tight text-text">
                 Train with <span className="text-brand-accent">AR Guidance</span>
               </h2>
-              <p className="text-base text-text-muted mb-8 leading-relaxed max-w-lg">
+              <p className="text-sm sm:text-base text-text-muted mb-6 sm:mb-8 leading-relaxed max-w-lg">
                 Practice labor positions and breathing techniques with real-time visual feedback from your phone.
               </p>
 
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {[
                   { title: "Posture Correction", desc: "Real-time feedback" },
                   { title: "Breathing Exercises", desc: "Guided sessions" },
@@ -489,28 +489,28 @@ export default function LandingPage() {
       </section>
 
       {/* About Section with Expert Carousel */}
-      <section id="about" className="relative py-32 overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
+      <section id="about" className="relative py-16 sm:py-32 overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-[14rem] lg:text-[18rem] font-black text-white select-none text-center leading-[0.85]">
+          <div className="text-[6rem] sm:text-[10rem] lg:text-[18rem] font-black text-white select-none text-center leading-[0.85]">
             Meet
             <br />
             The Team
           </div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
             <p className="text-sm font-semibold text-brand-accent uppercase tracking-wider mb-4">ABOUT US</p>
-            <h2 className="text-5xl sm:text-6xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-6">
               <span className="text-text">First Time Mom? </span>
               <span className="text-brand-accent">We've Got You.</span>
             </h2>
-            <p className="text-lg text-text-muted max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-text-muted max-w-3xl mx-auto leading-relaxed px-2">
               At MatriVerse, we specialize in guiding first-time mothers through pregnancy with confidence.
               From understanding your body's changes to mastering labor techniques, our expert coaches
               provide personalized support so you feel prepared, informed, and empowered for your D-Day.
@@ -518,8 +518,8 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Expert Carousel - Stacked Full Image Cards */}
-          <div className="relative max-w-lg mx-auto mb-24 h-[540px]">
-            <div className="relative h-full w-[380px] mx-auto">
+          <div className="relative max-w-lg mx-auto mb-16 sm:mb-24 h-[450px] sm:h-[540px]">
+            <div className="relative h-full w-[300px] sm:w-[380px] mx-auto">
               {/* Stacked Cards */}
               {experts.map((expert, idx) => {
                 const position = (idx - currentExpert + experts.length) % experts.length;
@@ -543,7 +543,7 @@ export default function LandingPage() {
                   >
                     {/* Card Container with Flip */}
                     <div
-                      className="relative w-full h-[500px] transition-transform duration-700"
+                      className="relative w-full h-[400px] sm:h-[500px] transition-transform duration-700"
                       style={{
                         transformStyle: 'preserve-3d',
                         transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
@@ -634,9 +634,9 @@ export default function LandingPage() {
                   setFlippedCard(null);
                   setCurrentExpert((prev) => (prev - 1 + experts.length) % experts.length);
                 }}
-                className="absolute -left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all hover:scale-110 z-50"
+                className="absolute -left-2 sm:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-14 sm:h-14 bg-white/90 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all hover:scale-110 z-50"
               >
-                <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -645,9 +645,9 @@ export default function LandingPage() {
                   setFlippedCard(null);
                   setCurrentExpert((prev) => (prev + 1) % experts.length);
                 }}
-                className="absolute -right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all hover:scale-110 z-50"
+                className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-14 sm:h-14 bg-white/90 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all hover:scale-110 z-50"
               >
-                <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -655,21 +655,21 @@ export default function LandingPage() {
           </div>
 
           {/* Stats with Count-up Animation */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-20 text-center mt-16">
-            <div className="space-y-3" ref={activeMothers.ref}>
-              <div className="text-7xl sm:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-500 bg-clip-text text-transparent leading-none">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 md:gap-20 text-center mt-12 sm:mt-16">
+            <div className="space-y-2 sm:space-y-3" ref={activeMothers.ref}>
+              <div className="text-5xl sm:text-7xl md:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-500 bg-clip-text text-transparent leading-none">
                 {activeMothers.count}+
               </div>
               <p className="text-purple-300 uppercase tracking-widest text-xs font-semibold">FIRST-TIME MOMS</p>
             </div>
-            <div className="space-y-3" ref={sessionsCompleted.ref}>
-              <div className="text-7xl sm:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-500 bg-clip-text text-transparent leading-none">
+            <div className="space-y-2 sm:space-y-3" ref={sessionsCompleted.ref}>
+              <div className="text-5xl sm:text-7xl md:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-500 bg-clip-text text-transparent leading-none">
                 {sessionsCompleted.count >= 1000 ? `${(sessionsCompleted.count / 1000).toFixed(1)}K` : sessionsCompleted.count}+
               </div>
               <p className="text-purple-300 uppercase tracking-widest text-xs font-semibold">COACHING SESSIONS</p>
             </div>
-            <div className="space-y-3" ref={successfulDeliveries.ref}>
-              <div className="text-7xl sm:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent leading-none">
+            <div className="space-y-2 sm:space-y-3" ref={successfulDeliveries.ref}>
+              <div className="text-5xl sm:text-7xl md:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent leading-none">
                 {successfulDeliveries.count}%
               </div>
               <p className="text-purple-300 uppercase tracking-widest text-xs font-semibold">FELT PREPARED</p>
@@ -679,20 +679,20 @@ export default function LandingPage() {
       </section>
 
       {/* Detailed Programs Section */}
-      <section id="programs" className="py-32" style={{ backgroundColor: '#f5f5f5' }}>
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <section id="programs" className="py-16 sm:py-32" style={{ backgroundColor: '#f5f5f5' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
           >
             <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">COACHING PROGRAMS</p>
-            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-5xl lg:text-7xl font-bold mb-6">
               <span className="text-text">Your Pregnancy. </span>
               <span className="text-brand-accent">Your Journey.</span>
             </h2>
-            <p className="text-lg text-text-muted max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-text-muted max-w-3xl mx-auto leading-relaxed px-2">
               Every first-time mom's journey is unique. Whether you're in your first trimester or counting
               down to D-Day, our expert coaches design personalized programs to help you feel confident,
               prepared, and supported every step of the way.
@@ -700,7 +700,7 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Detailed Program Cards */}
-          <div className="space-y-16 max-w-4xl mx-auto">
+          <div className="space-y-10 sm:space-y-16 max-w-4xl mx-auto">
             {detailedPrograms.map((program, idx) => (
               <motion.div
                 key={idx}
@@ -708,41 +708,41 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="relative px-8 lg:px-16"
+                className="relative px-2 sm:px-8 lg:px-16"
               >
                 {/* Decorative Image on Left Edge - Bouncing */}
                 {program.imagePosition === 'left' && (
                   <motion.div
                     {...bounceAnimation}
-                    className="absolute -left-8 lg:-left-16 top-1/2 -translate-y-1/2 w-44 lg:w-52 h-auto pointer-events-none z-10"
+                    className="absolute -left-4 sm:-left-8 lg:-left-16 top-0 sm:top-1/2 sm:-translate-y-1/2 w-20 sm:w-44 lg:w-52 h-auto pointer-events-none z-10"
                   >
                     <img
                       src={program.image}
                       alt={program.title}
-                      className="w-full h-full object-contain drop-shadow-lg"
+                      className="w-full h-full object-contain drop-shadow-lg opacity-60 sm:opacity-100"
                       style={{ maxHeight: '240px' }}
                     />
                   </motion.div>
                 )}
 
                 {/* Card */}
-                <div className="bg-white rounded-3xl shadow-lg p-10 lg:p-12 relative">
+                <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg p-6 sm:p-10 lg:p-12 relative">
                   {/* Content */}
-                  <div className={`relative z-10 ${program.imagePosition === 'left' ? 'ml-12 lg:ml-16' : 'mr-12 lg:mr-16'}`}>
+                  <div className={`relative z-10 ${program.imagePosition === 'left' ? 'md:ml-12 lg:ml-16' : 'md:mr-12 lg:mr-16'}`}>
                     {/* Arrow icon in top right */}
-                    <div className="absolute -top-2 -right-2">
+                    <div className="absolute -top-2 -right-2 hidden sm:block">
                       <svg className="w-7 h-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
                     </div>
 
-                    <h3 className="text-3xl lg:text-4xl font-bold text-text mb-5 leading-tight pr-8">{program.title}</h3>
-                    <p className="text-base text-gray-600 mb-7 leading-relaxed">
+                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text mb-4 sm:mb-5 leading-tight pr-0 sm:pr-8">{program.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-5 sm:mb-7 leading-relaxed">
                       {program.description}
                     </p>
 
                     {/* Features */}
-                    <ul className="space-y-4">
+                    <ul className="space-y-3 sm:space-y-4">
                       {program.features.map((feature, featureIdx) => (
                         <li key={featureIdx} className="flex items-start gap-3">
                           <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${program.gradient} flex items-center justify-center shrink-0 mt-0.5`}>
@@ -761,12 +761,12 @@ export default function LandingPage() {
                 {program.imagePosition === 'right' && (
                   <motion.div
                     {...bounceAnimation}
-                    className="absolute -right-8 lg:-right-16 top-1/2 -translate-y-1/2 w-52 lg:w-60 h-auto pointer-events-none z-10"
+                    className="absolute -right-4 sm:-right-8 lg:-right-16 top-0 sm:top-1/2 sm:-translate-y-1/2 w-24 sm:w-52 lg:w-60 h-auto pointer-events-none z-10"
                   >
                     <img
                       src={program.image}
                       alt={program.title}
-                      className="w-full h-full object-contain drop-shadow-lg"
+                      className="w-full h-full object-contain drop-shadow-lg opacity-50 sm:opacity-100"
                       style={{ maxHeight: '260px' }}
                     />
                   </motion.div>
@@ -778,26 +778,26 @@ export default function LandingPage() {
       </section>
 
       {/* Designed For You CTA */}
-      <section className="py-32" style={{ backgroundColor: '#f5f5f5' }}>
-        <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+      <section className="py-16 sm:py-32" style={{ backgroundColor: '#f5f5f5' }}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 lg:px-12 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <p className="text-gray-500 mb-4">First pregnancy? We specialize in guiding new moms</p>
-            <h2 className="text-5xl sm:text-6xl font-bold mb-8">
+            <p className="text-gray-500 mb-4 text-sm sm:text-base">First pregnancy? We specialize in guiding new moms</p>
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-6 sm:mb-8">
               <span className="text-brand-accent">Designed for First-Time Moms.</span>
             </h2>
-            <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto px-2">
               Join hundreds of first-time mothers who felt confident and prepared for their D-Day with MatriVerse.
             </p>
             <Link
               href="/signup"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-brand-accent text-white rounded-full font-semibold text-lg hover:opacity-90 transition-all shadow-xl hover:shadow-2xl"
+              className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-brand-accent text-white rounded-full font-semibold text-base sm:text-lg hover:opacity-90 transition-all shadow-xl hover:shadow-2xl"
             >
               Start Your Journey
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </Link>
@@ -806,31 +806,31 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works - 4 Card Grid */}
-      <section id="how-it-works" className="py-24" style={{ backgroundColor: '#f9fafb' }}>
-        <div className="max-w-[1400px] mx-auto px-8 lg:px-16">
+      <section id="how-it-works" className="py-16 sm:py-24" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-16">
           {/* Heading */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-10"
+            className="text-center mb-8 sm:mb-10"
           >
-            <h2 className="text-4xl sm:text-5xl font-bold">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               <span className="text-text">How It Works</span>
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
             {/* Card 1: Choose Your Program - Wider */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0 }}
-              className="relative rounded-[2rem] overflow-visible p-8 lg:p-10 min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-purple-400 to-purple-500 lg:col-span-3"
+              className="relative rounded-2xl sm:rounded-[2rem] overflow-hidden p-6 sm:p-8 lg:p-10 min-h-[240px] sm:min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-purple-400 to-purple-500 sm:col-span-2 lg:col-span-3"
             >
-              <div className="absolute top-6 right-6 z-20">
-                <svg className="w-6 h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </div>
@@ -838,13 +838,13 @@ export default function LandingPage() {
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-4 -right-4 z-10"
+                className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 z-10"
               >
-                <img src="/Image 1 → FitFlow.svg" alt="" className="w-44 h-44 lg:w-48 lg:h-48 object-contain opacity-85 drop-shadow-2xl" />
+                <img src="/Image 1 → FitFlow.svg" alt="" className="w-24 h-24 sm:w-44 sm:h-44 lg:w-48 lg:h-48 object-contain opacity-70 sm:opacity-85 drop-shadow-2xl" />
               </motion.div>
 
               <div className="relative z-10 max-w-xs">
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">Choose<br />Your Program</h3>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight">Choose<br />Your Program</h3>
                 <p className="text-white/90 text-sm lg:text-base leading-relaxed">
                   Select the plan that fits your trimester—labor prep, breathing, or full pregnancy coaching.
                 </p>
@@ -857,10 +857,10 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="relative rounded-[2rem] overflow-visible p-8 lg:p-10 min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-purple-300 to-purple-400 lg:col-span-2"
+              className="relative rounded-2xl sm:rounded-[2rem] overflow-hidden p-6 sm:p-8 lg:p-10 min-h-[240px] sm:min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-purple-300 to-purple-400 lg:col-span-2"
             >
-              <div className="absolute top-6 right-6 z-20">
-                <svg className="w-6 h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </div>
@@ -868,13 +868,13 @@ export default function LandingPage() {
               <motion.div
                 animate={{ y: [0, 8, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="absolute -bottom-8 -right-8 z-10"
+                className="absolute -bottom-4 -right-4 sm:-bottom-8 sm:-right-8 z-10"
               >
-                <img src="/Image 2 → FitFlow.svg" alt="" className="w-56 h-56 lg:w-60 lg:h-60 object-contain opacity-70" />
+                <img src="/Image 2 → FitFlow.svg" alt="" className="w-28 h-28 sm:w-56 sm:h-56 lg:w-60 lg:h-60 object-contain opacity-50 sm:opacity-70" />
               </motion.div>
 
               <div className="relative z-10 max-w-xs">
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">Get Your<br />Personalized Plan</h3>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight">Get Your<br />Personalized Plan</h3>
                 <p className="text-white/90 text-sm lg:text-base leading-relaxed">
                   Your coach designs a custom preparation plan based on your due date and medical history.
                 </p>
@@ -887,16 +887,16 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="relative rounded-[2rem] overflow-visible p-8 lg:p-10 min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-purple-300 to-purple-400 lg:col-span-2"
+              className="relative rounded-2xl sm:rounded-[2rem] overflow-hidden p-6 sm:p-8 lg:p-10 min-h-[240px] sm:min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-purple-300 to-purple-400 lg:col-span-2"
             >
-              <div className="absolute top-6 right-6 z-20">
-                <svg className="w-6 h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </div>
 
               <div className="relative z-10 max-w-xs">
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">Practice<br />At Home</h3>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight">Practice<br />At Home</h3>
                 <p className="text-white/90 text-sm lg:text-base leading-relaxed">
                   Use AR training, guided videos, and breathing exercises from the comfort of your home.
                 </p>
@@ -909,10 +909,10 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="relative rounded-[2rem] overflow-visible p-8 lg:p-10 min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-blue-300 to-blue-400 lg:col-span-3"
+              className="relative rounded-2xl sm:rounded-[2rem] overflow-hidden p-6 sm:p-8 lg:p-10 min-h-[240px] sm:min-h-[320px] flex flex-col justify-between bg-gradient-to-br from-blue-300 to-blue-400 sm:col-span-2 lg:col-span-3"
             >
-              <div className="absolute top-6 right-6 z-20">
-                <svg className="w-6 h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </div>
@@ -920,13 +920,13 @@ export default function LandingPage() {
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -bottom-10 -right-10 z-10"
+                className="absolute -bottom-6 -right-6 sm:-bottom-10 sm:-right-10 z-10"
               >
-                <img src="/Image 3 → FitFlow.png" alt="" className="w-64 h-64 lg:w-72 lg:h-72 object-contain opacity-80" />
+                <img src="/Image 3 → FitFlow.png" alt="" className="w-32 h-32 sm:w-64 sm:h-64 lg:w-72 lg:h-72 object-contain opacity-60 sm:opacity-80" />
               </motion.div>
 
               <div className="relative z-10 max-w-xs">
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">Feel Ready<br />for D-Day</h3>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight">Feel Ready<br />for D-Day</h3>
                 <p className="text-white/90 text-sm lg:text-base leading-relaxed">
                   Track your progress, build confidence, and feel fully prepared for your delivery day!
                 </p>
@@ -937,22 +937,22 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section - Auto-scrolling Carousel */}
-      <section id="testimonials" className="py-24 relative overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
+      <section id="testimonials" className="py-16 sm:py-24 relative overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
         {/* Background Text */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-[10rem] lg:text-[14rem] font-black text-white select-none text-center leading-[0.85] opacity-80">
+          <div className="text-[5rem] sm:text-[8rem] lg:text-[14rem] font-black text-white select-none text-center leading-[0.85] opacity-80">
             What Our...
           </div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
               <span className="text-brand-accent">Real Mothers.</span>
               <span className="text-text"> Real Results.</span>
             </h2>
@@ -1016,27 +1016,27 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section - No Image */}
-      <section id="faq" className="py-32" style={{ backgroundColor: '#f9fafb' }}>
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-12">
+      <section id="faq" className="py-16 sm:py-32" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h2 className="text-5xl font-bold mb-3">
+            <h2 className="text-3xl sm:text-5xl font-bold mb-2 sm:mb-3">
               <span className="text-text">Questions?</span>
             </h2>
-            <h3 className="text-4xl font-bold text-brand-accent mb-8">
+            <h3 className="text-2xl sm:text-4xl font-bold text-brand-accent mb-6 sm:mb-8">
               We've got answers.
             </h3>
-            <p className="text-text-muted">
+            <p className="text-text-muted text-sm sm:text-base px-2">
               Find answers to the most common questions about MatriVerse, including
               features, pricing, and how to get started.
             </p>
           </motion.div>
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {faqs.map((faq, idx) => (
               <motion.div
                 key={idx}
@@ -1044,18 +1044,18 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05 }}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden"
+                className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full flex items-center justify-between text-left p-6 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between text-left p-4 sm:p-6 hover:bg-gray-50 transition-colors"
                 >
-                  <span className="font-semibold text-text pr-4">{faq.question}</span>
+                  <span className="font-semibold text-text pr-3 sm:pr-4 text-sm sm:text-base">{faq.question}</span>
                   <motion.div
                     animate={{ rotate: openFaq === idx ? 180 : 0 }}
-                    className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0"
                   >
-                    <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </motion.div>
@@ -1069,7 +1069,7 @@ export default function LandingPage() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-6 pb-6 text-text-muted leading-relaxed">
+                      <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-text-muted leading-relaxed text-sm sm:text-base">
                         {faq.answer}
                       </div>
                     </motion.div>
@@ -1082,59 +1082,59 @@ export default function LandingPage() {
       </section>
 
       {/* Footer Section with Newsletter */}
-      <footer className="py-24" style={{ backgroundColor: '#f9fafb' }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <footer className="py-12 sm:py-24" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16">
             {/* Left Side - Newsletter */}
             <div>
-              <h2 className="text-4xl sm:text-5xl font-bold mb-8 leading-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold mb-6 sm:mb-8 leading-tight">
                 <span className="text-brand-accent">Join our newsletter </span>
                 <span className="text-text">for pregnancy tips & first-mom advice!</span>
               </h2>
 
-              <div className="flex gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="px-6 py-4 bg-white rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-400 w-full max-w-xs text-gray-700"
+                  className="px-5 sm:px-6 py-3 sm:py-4 bg-white rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-400 w-full sm:max-w-xs text-gray-700 text-sm sm:text-base"
                 />
-                <button className="px-6 py-4 bg-purple-400 text-white rounded-full font-medium hover:bg-purple-500 transition-colors shadow-lg flex items-center gap-2">
+                <button className="px-5 sm:px-6 py-3 sm:py-4 bg-purple-400 text-white rounded-full font-medium hover:bg-purple-500 transition-colors shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base">
                   Subscribe
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </button>
               </div>
 
-              <p className="text-sm text-gray-500 mb-8">
+              <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8">
                 By signing up to receive emails from MatriVerse, you agree to our{' '}
                 <Link href="#" className="text-purple-500 hover:underline">Privacy Policy</Link>.
                 We treat your info responsibly. Unsubscribe anytime.
               </p>
 
-              <p className="text-gray-900 font-medium mb-8">
+              <p className="text-gray-900 font-medium mb-6 sm:mb-8 text-sm sm:text-base">
                 Contact us: <a href="mailto:hello@matriverse.com" className="text-purple-500 hover:underline">hello@matriverse.com</a>
               </p>
 
               {/* Social Icons */}
               <div className="flex gap-3">
-                <a href="#" className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <a href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z" />
                   </svg>
                 </a>
-                <a href="#" className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <a href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                 </a>
-                <a href="#" className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <a href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                   </svg>
                 </a>
-                <a href="#" className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <a href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
                   </svg>
                 </a>
@@ -1143,13 +1143,13 @@ export default function LandingPage() {
 
             {/* Right Side - Sitemap (Landing Page Sections Only) */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">SITEMAP</h4>
-              <ul className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 sm:mb-6">SITEMAP</h4>
+              <ul className="space-y-3 sm:space-y-4">
                 {sectionLinks.map((link, idx) => (
-                  <li key={idx} className="border-b border-gray-200 pb-4">
+                  <li key={idx} className="border-b border-gray-200 pb-3 sm:pb-4">
                     <button
                       onClick={() => scrollToSection(link.href)}
-                      className="flex items-center justify-between w-full text-purple-500 hover:text-purple-600 transition-colors font-medium"
+                      className="flex items-center justify-between w-full text-purple-500 hover:text-purple-600 transition-colors font-medium text-sm sm:text-base"
                     >
                       {link.name}
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1163,8 +1163,8 @@ export default function LandingPage() {
           </div>
 
           {/* Bottom */}
-          <div className="mt-16 flex items-center justify-center">
-            <p className="text-gray-400 text-sm">
+          <div className="mt-10 sm:mt-16 flex items-center justify-center">
+            <p className="text-gray-400 text-xs sm:text-sm text-center">
               Copyright 2026 MatriVerse. All rights reserved.
             </p>
           </div>
