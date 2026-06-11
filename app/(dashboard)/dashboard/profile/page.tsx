@@ -187,7 +187,7 @@ export default async function ProfilePage() {
                   Medical History
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {profile.medical_history.map((item, index) => (
+                  {profile.medical_history.map((item: string | { condition: string }, index: number) => (
                     <span
                       key={index}
                       className="px-3 py-1.5 bg-brand-surface text-brand-mid text-sm rounded-full"
