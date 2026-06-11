@@ -35,7 +35,15 @@ async function createPoseLandmarker(
   }
 }
 
-function warmupLandmarker(landmarker: PoseLandmarker): void {
+// Warmup is disabled in dev mode due to Next.js error overlay capturing TFLite WASM logs
+// The first real detection will be slightly slower, but avoids the false error display
+function warmupLandmarker(_landmarker: PoseLandmarker): void {
+  // No-op in development - warmup triggers TFLite INFO logs that Next.js shows as errors
+  if (process.env.NODE_ENV === "development") {
+    return;
+  }
+
+  // In production, warmup is safe
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
@@ -46,11 +54,9 @@ function warmupLandmarker(landmarker: PoseLandmarker): void {
   ctx.fillRect(0, 0, 64, 64);
 
   try {
-    landmarker.detect(canvas);
-  } catch (error) {
-    if (!isMediapipeWasmConsoleNoise(error)) {
-      console.warn("[PoseLandmarker] Warmup detect failed:", error);
-    }
+    _landmarker.detect(canvas);
+  } catch {
+    // Silently ignore warmup errors
   }
 }
 

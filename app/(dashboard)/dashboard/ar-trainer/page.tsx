@@ -6,12 +6,22 @@ import { getARStats } from "@/app/actions/ar-training";
 
 const sessions = [
   {
+    name: "Simple Movement Session",
+    duration: "5 min",
+    difficulty: "Easy",
+    progress: 0,
+    slug: "simple-movement",
+    available: true,
+    description: "Gentle guided movements with face tracking - no full body detection needed"
+  },
+  {
     name: "Deep Squat Training",
     duration: "15 min",
     difficulty: "Beginner",
     progress: 0,
     slug: "deep-squat",
-    available: true
+    available: true,
+    description: "Full body pose tracking for proper squat form"
   },
   {
     name: "Pelvic Floor Exercises",
@@ -19,7 +29,8 @@ const sessions = [
     difficulty: "Intermediate",
     progress: 0,
     slug: "pelvic-floor",
-    available: false
+    available: false,
+    description: "Targeted pelvic floor strengthening"
   },
   {
     name: "Birth Ball Movements",
@@ -27,7 +38,8 @@ const sessions = [
     difficulty: "Beginner",
     progress: 0,
     slug: "birth-ball",
-    available: false
+    available: false,
+    description: "Exercises using a birth ball for comfort and preparation"
   },
   {
     name: "Hip Opening Stretches",
@@ -35,7 +47,8 @@ const sessions = [
     difficulty: "Intermediate",
     progress: 0,
     slug: "hip-opening",
-    available: false
+    available: false,
+    description: "Stretches to improve hip mobility for labour"
   },
 ];
 

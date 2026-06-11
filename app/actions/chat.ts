@@ -69,14 +69,23 @@ export async function sendMessage(
     // Get user's profile for personalization
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, due_date, is_first_pregnancy")
+      .select("first_name, due_date, is_first_pregnancy, medical_history")
       .eq("id", user.id)
       .single();
+
+    // Get user's recent scans with AI interpretations
+    const { data: recentScans } = await supabase
+      .from("scans")
+      .select("scan_type, scan_date, trimester, ai_interpretation, notes")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
 
     const firstName = profile?.first_name || "there";
 
     // Calculate gestational week if due date exists
     let gestationalWeek: number | null = null;
+    let trimester: number | null = null;
     if (profile?.due_date) {
       const dueDate = new Date(profile.due_date);
       const now = new Date();
@@ -85,17 +94,52 @@ export async function sendMessage(
       const weeksRemaining = Math.ceil(diffDays / 7);
       gestationalWeek = 40 - weeksRemaining;
       if (gestationalWeek < 1 || gestationalWeek > 42) gestationalWeek = null;
+      if (gestationalWeek) {
+        if (gestationalWeek <= 12) trimester = 1;
+        else if (gestationalWeek <= 26) trimester = 2;
+        else trimester = 3;
+      }
     }
 
     // Build context about the user
     let userContext = `The user's name is ${firstName}.`;
     if (gestationalWeek) {
-      userContext += ` They are currently at week ${gestationalWeek} of pregnancy.`;
+      userContext += ` They are currently at week ${gestationalWeek} of pregnancy (Trimester ${trimester}).`;
     }
     if (profile && profile.is_first_pregnancy !== null) {
       userContext += profile.is_first_pregnancy
         ? " This is their first pregnancy."
         : " They have been pregnant before.";
+    }
+
+    // Add medical history context
+    if (profile?.medical_history && Array.isArray(profile.medical_history) && profile.medical_history.length > 0) {
+      const conditions = profile.medical_history
+        .filter((item: { condition?: string; selected?: boolean } | string) =>
+          typeof item === 'string' ? item !== 'None of the above' : (item.selected && item.condition !== 'None of the above')
+        )
+        .map((item: { condition?: string } | string) => typeof item === 'string' ? item : item.condition);
+
+      if (conditions.length > 0) {
+        userContext += ` Medical history includes: ${conditions.join(', ')}.`;
+      }
+    }
+
+    // Add scan information context
+    if (recentScans && recentScans.length > 0) {
+      userContext += ` The user has ${recentScans.length} uploaded scan(s).`;
+
+      // Include AI interpretations if available
+      const scansWithInterpretations = recentScans.filter(scan => scan.ai_interpretation);
+      if (scansWithInterpretations.length > 0) {
+        userContext += " Recent scan findings:";
+        scansWithInterpretations.slice(0, 2).forEach(scan => {
+          const interpretation = scan.ai_interpretation;
+          if (interpretation?.summary) {
+            userContext += ` ${scan.scan_type ? scan.scan_type.replace('_', ' ') + ' scan' : 'Scan'}: ${interpretation.summary}`;
+          }
+        });
+      }
     }
 
     // Build messages array for Claude

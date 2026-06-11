@@ -2,33 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Count-up hook for animated numbers
-function useCountUp(end: number, duration: number = 2000, startOnView: boolean = true) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-  const hasStarted = useRef(false);
-
-  useEffect(() => {
-    if (!startOnView || (isInView && !hasStarted.current)) {
-      hasStarted.current = true;
-      let startTime: number;
-      const animate = (timestamp: number) => {
-        if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / duration, 1);
-        setCount(Math.floor(progress * end));
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        }
-      };
-      requestAnimationFrame(animate);
-    }
-  }, [end, duration, isInView, startOnView]);
-
-  return { count, ref };
-}
 
 export default function LandingPage() {
   const [currentExpert, setCurrentExpert] = useState(0);
@@ -47,10 +22,6 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Count-up stats
-  const activeMothers = useCountUp(420, 2000);
-  const sessionsCompleted = useCountUp(3200, 2000);
-  const successfulDeliveries = useCountUp(95, 2000);
 
 
   const experts = [
@@ -159,11 +130,11 @@ export default function LandingPage() {
     },
     {
       title: "Trimester Wellness.",
-      description: "Personalized programs designed for each stage of your pregnancy. Safe exercises, symptom management, and expert guidance tailored to your trimester.",
+      description: "Personalized programs designed for each stage of your pregnancy. Safe exercises, symptom management, and AI-powered guidance tailored to your trimester.",
       features: [
         "Trimester-specific exercises",
         "Symptom tracking & management",
-        "Expert coach check-ins"
+        "AI coach check-ins"
       ],
       image: "/Image 3 → FitFlow.png",
       gradient: "from-brand-accent to-brand-mid",
@@ -186,19 +157,19 @@ export default function LandingPage() {
   const faqs = [
     {
       question: "What is MatriVerse?",
-      answer: "MatriVerse is a coaching platform specifically designed for first-time pregnant women. We help you prepare for labor and delivery with expert guidance, personalized programs, AR-assisted position practice, and 24/7 support."
+      answer: "MatriVerse is an AI-powered coaching platform specifically designed for first-time pregnant women. We help you prepare for labor and delivery with personalized AI guidance, smart programs, AR-assisted position practice, and 24/7 support."
     },
     {
       question: "Is this only for first-time moms?",
-      answer: "While we specialize in supporting first-time mothers, our programs benefit any expectant mom who wants expert guidance. We understand the unique anxieties and questions that come with your first pregnancy."
+      answer: "While we specialize in supporting first-time mothers, our programs benefit any expectant mom who wants personalized AI guidance. We understand the unique anxieties and questions that come with your first pregnancy."
     },
     {
-      question: "Who are the coaches?",
-      answer: "Our team includes certified maternal health experts, labor & delivery coaches, prenatal specialists, and experienced doulas who have helped hundreds of first-time moms through pregnancy and childbirth."
+      question: "How does the AI coach work?",
+      answer: "Our AI coach is trained on extensive maternal health knowledge and provides personalized guidance based on your pregnancy journey. It's available 24/7 to answer questions, provide support, and guide you through exercises and preparation."
     },
     {
       question: "How does the coaching work?",
-      answer: "You'll get a personalized plan based on your due date, trimester, and medical history. Access AR training sessions, educational videos, breathing exercises, and get direct support from your coach—all from your device."
+      answer: "You'll get a personalized plan based on your due date, trimester, and medical history. Access AR training sessions, educational videos, breathing exercises, and get direct support from your AI coach—all from your device."
     },
     {
       question: "What is AR training?",
@@ -206,11 +177,11 @@ export default function LandingPage() {
     },
     {
       question: "How do I get started?",
-      answer: "Simply sign up, complete your health profile with your due date and medical history, and we'll match you with a coach and recommend the best program for your current stage of pregnancy."
+      answer: "Simply sign up, complete your health profile with your due date and medical history, and your AI coach will create the best personalized program for your current stage of pregnancy."
     },
     {
-      question: "Can I reach my coach anytime?",
-      answer: "Yes! Your coach is available through the AI Coach feature for instant answers, plus scheduled check-ins. Many first-time moms have questions at 2am—we're here for that too."
+      question: "Can I reach my AI coach anytime?",
+      answer: "Yes! Your AI coach is available 24/7 for instant answers and support. Many first-time moms have questions at 2am—we're here for that too."
     }
   ];
 
@@ -326,7 +297,7 @@ export default function LandingPage() {
               >
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-white text-brand-dark rounded-full font-semibold text-base sm:text-lg hover:bg-gray-100 transition-all shadow-xl"
+                  className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-white text-brand-accent rounded-full font-semibold text-base sm:text-lg hover:bg-brand-surface transition-all shadow-xl"
                 >
                   Get Started
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -374,14 +345,14 @@ export default function LandingPage() {
             >
               <div className="max-w-md">
                 <p className="text-base sm:text-lg text-white mb-6 leading-relaxed" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-                  <span className="font-semibold">Your first pregnancy</span> is a journey that deserves expert guidance. Personalized coaching, AR-assisted labor preparation, and <span className="font-semibold">24/7 support</span> — all in one place.
+                  <span className="font-semibold">Your first pregnancy</span> is a journey that deserves personalized guidance. AI-powered coaching, AR-assisted labor preparation, and <span className="font-semibold">24/7 support</span> — all in one place.
                 </p>
 
                 <button
                   onClick={() => window.location.href = '/signup'}
-                  className="group px-6 sm:px-8 py-3 sm:py-4 bg-white text-brand-dark rounded-full font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl flex items-center gap-3"
+                  className="group px-6 sm:px-8 py-3 sm:py-4 bg-white text-brand-accent rounded-full font-semibold text-sm sm:text-base hover:bg-brand-surface transition-all shadow-xl hover:shadow-2xl flex items-center gap-3"
                 >
-                  Start Your Journey
+                  Dive into the MatriVerse
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
@@ -416,7 +387,7 @@ export default function LandingPage() {
                   { title: "Posture Correction", desc: "Real-time feedback" },
                   { title: "Breathing Exercises", desc: "Guided sessions" },
                   { title: "Progress Tracking", desc: "See your growth" },
-                  { title: "Video Coaching", desc: "Expert guidance" }
+                  { title: "Video Coaching", desc: "AI guidance" }
                 ].map((feature, idx) => (
                   <motion.div
                     key={idx}
@@ -512,8 +483,8 @@ export default function LandingPage() {
             </h2>
             <p className="text-base sm:text-lg text-text-muted max-w-3xl mx-auto leading-relaxed px-2">
               At MatriVerse, we specialize in guiding first-time mothers through pregnancy with confidence.
-              From understanding your body's changes to mastering labor techniques, our expert coaches
-              provide personalized support so you feel prepared, informed, and empowered for your D-Day.
+              From understanding your body's changes to mastering labor techniques, our AI coach
+              provides personalized support so you feel prepared, informed, and empowered for your D-Day.
             </p>
           </motion.div>
 
@@ -654,27 +625,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Stats with Count-up Animation */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 md:gap-20 text-center mt-12 sm:mt-16">
-            <div className="space-y-2 sm:space-y-3" ref={activeMothers.ref}>
-              <div className="text-5xl sm:text-7xl md:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-500 bg-clip-text text-transparent leading-none">
-                {activeMothers.count}+
-              </div>
-              <p className="text-purple-300 uppercase tracking-widest text-xs font-semibold">FIRST-TIME MOMS</p>
-            </div>
-            <div className="space-y-2 sm:space-y-3" ref={sessionsCompleted.ref}>
-              <div className="text-5xl sm:text-7xl md:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-500 bg-clip-text text-transparent leading-none">
-                {sessionsCompleted.count >= 1000 ? `${(sessionsCompleted.count / 1000).toFixed(1)}K` : sessionsCompleted.count}+
-              </div>
-              <p className="text-purple-300 uppercase tracking-widest text-xs font-semibold">COACHING SESSIONS</p>
-            </div>
-            <div className="space-y-2 sm:space-y-3" ref={successfulDeliveries.ref}>
-              <div className="text-5xl sm:text-7xl md:text-8xl font-black bg-linear-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent leading-none">
-                {successfulDeliveries.count}%
-              </div>
-              <p className="text-purple-300 uppercase tracking-widest text-xs font-semibold">FELT PREPARED</p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -694,7 +644,7 @@ export default function LandingPage() {
             </h2>
             <p className="text-base sm:text-lg text-text-muted max-w-3xl mx-auto leading-relaxed px-2">
               Every first-time mom's journey is unique. Whether you're in your first trimester or counting
-              down to D-Day, our expert coaches design personalized programs to help you feel confident,
+              down to D-Day, our AI coach designs personalized programs to help you feel confident,
               prepared, and supported every step of the way.
             </p>
           </motion.div>
@@ -876,7 +826,7 @@ export default function LandingPage() {
               <div className="relative z-10 max-w-xs">
                 <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight">Get Your<br />Personalized Plan</h3>
                 <p className="text-white/90 text-sm lg:text-base leading-relaxed">
-                  Your coach designs a custom preparation plan based on your due date and medical history.
+                  Your AI coach designs a custom preparation plan based on your due date and medical history.
                 </p>
               </div>
             </motion.div>

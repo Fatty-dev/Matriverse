@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout";
 import { Card, CardContent, CardHeader } from "@/components/ui";
+import { NutritionTipCard } from "@/components/dashboard/NutritionTipCard";
 import { getProfile } from "@/app/actions/profile";
 import { getARStats } from "@/app/actions/ar-training";
 import { getSymptoms } from "@/app/actions/symptoms";
@@ -196,12 +197,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   href="/dashboard/mood"
                   className="px-4 py-2 bg-brand-mid text-white rounded-lg font-medium hover:bg-brand-dark transition-colors text-center text-sm sm:text-base"
                 >
+                  <button className="text-white">
                   Log Mood
+                  </button>
                 </Link>
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Weekly Nutrition Tip Flipbook */}
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4">
+            Weekly Nutrition Tip
+          </h2>
+          <NutritionTipCard currentWeek={currentWeek} />
+        </div>
 
         {/* Trimester-Based Recommendations */}
         {recommendations.length > 0 && (

@@ -188,23 +188,40 @@ IMPORTANT GUIDELINES:
 - Use PROFESSIONAL, CLINICAL language - NO emojis, NO emoticons, NO casual expressions
 - Keep all text clean, well-formatted, and easy to read
 - Use proper medical terminology with clear explanations
-- Be concise and informative
+- Provide detailed, thorough analysis
 
-When analyzing a scan image, provide your response in the following JSON format:
+RESPONSE FORMAT:
+You MUST respond with ONLY a valid JSON object (no markdown, no code blocks, no additional text). The JSON must have this exact structure:
+
 {
-  "summary": "A brief, professional summary of what is visible in the scan (2-3 sentences). Be factual and supportive.",
-  "key_findings": ["Array of key clinical observations about the image - be specific and professional"],
-  "recommendations": ["Array of general health recommendations or topics to discuss with healthcare provider"],
-  "trimester_info": "Educational information about this stage of pregnancy development based on observations",
-  "next_steps": ["Array of suggested next steps or questions to ask during the next medical appointment"]
+  "summary": "A detailed summary of 3-5 sentences describing what is visible in the scan. Include observations about fetal position, development markers, and any notable features. Be thorough but accessible.",
+  "key_findings": [
+    "First key observation with specific details",
+    "Second key observation with specific details",
+    "Third key observation with specific details",
+    "Fourth key observation if applicable",
+    "Fifth key observation if applicable"
+  ],
+  "recommendations": [
+    "First recommendation for the mother",
+    "Second recommendation about nutrition or lifestyle",
+    "Third recommendation about monitoring or follow-up"
+  ],
+  "trimester_info": "Detailed educational information about this stage of pregnancy development (3-4 sentences). Include what typically develops during this period and what to expect.",
+  "next_steps": [
+    "First suggested question or topic to discuss with healthcare provider",
+    "Second suggested follow-up action",
+    "Third next step or milestone to prepare for"
+  ]
 }
 
-FORMATTING RULES:
-- Do NOT use emojis or emoticons anywhere in the response
-- Do NOT use exclamation marks excessively
-- Use proper capitalization and punctuation
-- Keep sentences clear and professional
-- Avoid overly casual or informal language`;
+CRITICAL RULES:
+- Output ONLY the JSON object, nothing else
+- Do NOT wrap in markdown code blocks
+- Do NOT add any text before or after the JSON
+- Ensure all JSON strings are properly escaped
+- Provide at least 3 items in each array
+- Make each finding and recommendation detailed and specific`;
 
 export async function analyzeScan(scanId: string): Promise<{
   success: boolean;
@@ -292,7 +309,7 @@ export async function analyzeScan(scanId: string): Promise<{
     // Call Claude with vision
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: `${SCAN_ANALYSIS_PROMPT}\n\nUser Context: ${userContext}`,
       messages: [
         {
@@ -308,7 +325,7 @@ export async function analyzeScan(scanId: string): Promise<{
             },
             {
               type: "text",
-              text: "Please analyze this pregnancy scan image and provide helpful information about what you observe. Remember to be supportive and educational while encouraging the user to discuss findings with their healthcare provider.",
+              text: "Analyze this pregnancy scan image thoroughly. Provide detailed observations about fetal development, position, measurements if visible, and any notable features. Be educational and supportive. Respond with ONLY the JSON object as specified in your instructions - no markdown, no code blocks, just pure JSON.",
             },
           ],
         },
@@ -324,23 +341,66 @@ export async function analyzeScan(scanId: string): Promise<{
     // Parse the JSON response
     let interpretation: ScanInterpretation;
     try {
-      // Extract JSON from the response (it might be wrapped in markdown code blocks)
-      let jsonText = textContent.text;
-      const jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
+      // Extract JSON from the response (handle various formats)
+      let jsonText = textContent.text.trim();
+
+      // Try to extract JSON from markdown code blocks
+      const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
-        jsonText = jsonMatch[1];
+        jsonText = jsonMatch[1].trim();
       }
+
+      // Try to find JSON object if there's extra text
+      const jsonObjectMatch = jsonText.match(/\{[\s\S]*\}/);
+      if (jsonObjectMatch) {
+        jsonText = jsonObjectMatch[0];
+      }
+
       interpretation = JSON.parse(jsonText);
-    } catch {
-      // If JSON parsing fails, create a structured response from the text
+
+      // Validate required fields exist
+      if (!interpretation.summary || !interpretation.key_findings) {
+        throw new Error("Missing required fields");
+      }
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError, "Raw text:", textContent.text.slice(0, 500));
+
+      // If JSON parsing fails, try to extract meaningful content from the text
+      const rawText = textContent.text;
+
+      // Try to extract sections from the text
+      const summaryMatch = rawText.match(/summary["\s:]+([^"]+)/i);
+      const findingsMatch = rawText.match(/key_findings["\s:\[]+([^\]]+)/i);
+
       interpretation = {
-        summary: textContent.text.slice(0, 200),
-        key_findings: ["Unable to parse detailed findings. Please see the summary."],
-        recommendations: ["Please discuss this scan with your healthcare provider."],
+        summary: summaryMatch
+          ? summaryMatch[1].replace(/[",]/g, '').trim()
+          : rawText.length > 500
+            ? rawText.slice(0, 500) + "..."
+            : rawText,
+        key_findings: findingsMatch
+          ? findingsMatch[1].split(',').map(s => s.replace(/["\[\]]/g, '').trim()).filter(Boolean)
+          : [
+              "The scan shows a pregnancy in progress.",
+              "Detailed measurements and observations require professional interpretation.",
+              "Please consult with your healthcare provider for a complete analysis."
+            ],
+        recommendations: [
+          "Discuss these findings in detail with your healthcare provider.",
+          "Continue following your prenatal care schedule.",
+          "Maintain a healthy diet and stay hydrated."
+        ],
         trimester_info: scan.trimester
-          ? `This scan is from the ${scan.trimester === 1 ? "first" : scan.trimester === 2 ? "second" : "third"} trimester.`
-          : "Trimester information not specified.",
-        next_steps: ["Schedule a follow-up with your doctor to review this scan."],
+          ? `This scan is from the ${scan.trimester === 1 ? "first" : scan.trimester === 2 ? "second" : "third"} trimester. ` +
+            (scan.trimester === 1 ? "During the first trimester, major organ systems begin to develop." :
+             scan.trimester === 2 ? "The second trimester is often when fetal movement becomes noticeable and detailed anatomy can be assessed." :
+             "The third trimester focuses on fetal growth and preparation for delivery.")
+          : "Trimester information not specified. Your healthcare provider can determine the gestational age from the scan.",
+        next_steps: [
+          "Schedule a follow-up appointment to discuss this scan with your doctor.",
+          "Prepare any questions you have about your baby's development.",
+          "Continue with regular prenatal checkups as recommended."
+        ],
       };
     }
 

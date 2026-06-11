@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SimpleGuidedSquat } from "@/components/ar-training/SimpleGuidedSquat";
+import { SimpleMovementSession } from "@/components/ar-training/SimpleMovementSession";
 import { SafetyScreening } from "@/components/ar-training/SafetyScreening";
 
-export default function DeepSquatPage() {
+export default function SimpleMovementPage() {
   const router = useRouter();
   const [showSafetyScreen, setShowSafetyScreen] = useState(true);
   const [isSafeToStart, setIsSafeToStart] = useState(false);
@@ -31,6 +31,6 @@ export default function DeepSquatPage() {
     );
   }
 
-  // Show the AR training session after safety check passes
-  return <SimpleGuidedSquat />;
+  // Show the simple movement session after safety check passes
+  return <SimpleMovementSession />;
 }

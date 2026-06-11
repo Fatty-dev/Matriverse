@@ -63,27 +63,41 @@ export function VideoLibrary({ videos, progressMap }: VideoLibraryProps) {
           <CardContent className="p-6">
             <h2 className="text-xl font-bold text-white mb-4">Featured Videos</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {featuredVideos.slice(0, 3).map((video) => (
-                <div
-                  key={video.id}
-                  onClick={() => setSelectedVideo(video)}
-                  className="bg-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
+              {featuredVideos.slice(0, 3).map((video) => {
+                const thumbnail = video.video_url ? getYouTubeThumbnail(video.video_url) : null;
+                return (
+                  <div
+                    key={video.id}
+                    onClick={() => setSelectedVideo(video)}
+                    className="bg-white/10 rounded-xl overflow-hidden cursor-pointer hover:bg-white/20 transition-colors group"
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video">
+                      {thumbnail ? (
+                        <img src={thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-white/10" />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                      {video.duration_seconds && (
+                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white rounded text-xs">
+                          {formatDuration(video.duration_seconds)}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-white truncate">{video.title}</h3>
-                      <p className="text-sm text-white/70">
-                        {video.duration_seconds ? formatDuration(video.duration_seconds) : "N/A"}
-                      </p>
+                    {/* Title */}
+                    <div className="p-3">
+                      <h3 className="font-semibold text-white text-sm truncate">{video.title}</h3>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -146,9 +160,19 @@ export function VideoLibrary({ videos, progressMap }: VideoLibraryProps) {
                   >
                     {/* Thumbnail */}
                     <div className="relative aspect-video bg-gray-200 overflow-hidden">
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-mid/20 to-brand-accent/20">
-                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                          <svg className="w-8 h-8 text-brand-mid ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      {video.video_url && getYouTubeThumbnail(video.video_url) ? (
+                        <img
+                          src={getYouTubeThumbnail(video.video_url)!}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-brand-mid/20 to-brand-accent/20" />
+                      )}
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-mid transition-all shadow-lg">
+                          <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </div>
@@ -215,19 +239,42 @@ export function VideoLibrary({ videos, progressMap }: VideoLibraryProps) {
   );
 }
 
+function getYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function getYouTubeThumbnail(url: string): string | null {
+  const videoId = getYouTubeVideoId(url);
+  if (videoId) {
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  }
+  return null;
+}
+
 function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
+  const youtubeId = video.video_url ? getYouTubeVideoId(video.video_url) : null;
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <h2 className="text-xl font-bold text-text">{video.title}</h2>
-            <p className="text-sm text-text-muted capitalize">{video.category.replace("_", " ")}</p>
+        <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
+          <div className="min-w-0 flex-1 mr-4">
+            <h2 className="text-base font-bold text-text truncate">{video.title}</h2>
+            <p className="text-xs text-text-muted capitalize">{video.category.replace("_", " ")}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
             <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -235,44 +282,51 @@ function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
           </button>
         </div>
 
-        {/* Video placeholder */}
-        <div className="aspect-video bg-gray-900 flex items-center justify-center">
-          <div className="text-center text-white">
-            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+        {/* Video Player */}
+        <div className="aspect-video bg-gray-900 flex-shrink-0">
+          {youtubeId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+              title={video.title}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center text-white">
+                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                <p className="text-base font-medium mb-1">Video Coming Soon</p>
+                <p className="text-white/70 text-sm">This is a placeholder</p>
+              </div>
             </div>
-            <p className="text-lg font-medium mb-2">Video Coming Soon</p>
-            <p className="text-white/70 text-sm">This is a placeholder for: {video.title}</p>
-          </div>
+          )}
         </div>
 
-        {/* Description */}
-        <div className="p-6">
-          <h3 className="font-semibold text-text mb-2">About this video</h3>
-          <p className="text-text-muted mb-4">{video.description || "No description available."}</p>
+        {/* Description - Scrollable */}
+        <div className="p-4 overflow-y-auto flex-1">
+          <p className="text-sm text-text-muted mb-3">{video.description || "No description available."}</p>
 
-          <div className="flex flex-wrap gap-2">
-            {video.tags?.map((tag) => (
-              <span key={tag} className="px-3 py-1 bg-brand-surface text-brand-mid text-sm rounded-full">
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {video.duration_seconds && (
-            <p className="text-sm text-text-muted mt-4">
-              Duration: {formatDuration(video.duration_seconds)}
-            </p>
+          {video.tags && video.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {video.tags.slice(0, 5).map((tag) => (
+                <span key={tag} className="px-2 py-0.5 bg-brand-surface text-brand-mid text-xs rounded-full">
+                  {tag}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t bg-gray-50">
+        <div className="px-4 py-3 border-t bg-gray-50 flex-shrink-0">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2.5 bg-brand-mid text-white rounded-lg font-medium hover:bg-brand-dark transition-colors"
+            className="w-full px-4 py-2 bg-brand-mid text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors"
           >
             Close
           </button>

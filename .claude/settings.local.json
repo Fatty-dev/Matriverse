@@ -14,7 +14,10 @@
       "Bash(pnpm add:*)",
       "Bash(yarn add:*)",
       "Bash(/usr/local/bin/npm install framer-motion)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(npx tsc:*)",
+      "Bash(/opt/homebrew/bin/npm run lint)"
     ]
   }
 }
