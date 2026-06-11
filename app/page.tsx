@@ -41,7 +41,7 @@ export default function LandingPage() {
     },
     {
       name: "Kusimo Adeyosola",
-      title: "Medical Advisor",
+      title: "Founder & Registered Nurse",
       image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
       bio: "Board-certified physician with expertise in maternal health and prenatal care.",
       email: "kusimo.a@matriverse.com"
@@ -407,10 +407,12 @@ export default function LandingPage() {
                 href="/signup"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-brand-accent text-white rounded-full font-semibold hover:opacity-90 transition-all"
               >
+                <button className= "text-white flex items-center gap-3 ">
                 Try AR Experience
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
+                </button>
               </Link>
             </motion.div>
 
@@ -746,10 +748,12 @@ export default function LandingPage() {
               href="/signup"
               className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-brand-accent text-white rounded-full font-semibold text-base sm:text-lg hover:opacity-90 transition-all shadow-xl hover:shadow-2xl"
             >
-              Start Your Journey
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
+             <button className= "text-white flex items-center gap-3 ">
+                Start your Journey
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                </button>
             </Link>
           </motion.div>
         </div>
@@ -1063,10 +1067,10 @@ export default function LandingPage() {
               </p>
 
               <p className="text-gray-900 font-medium mb-6 sm:mb-8 text-sm sm:text-base">
-                Contact us: <a href="mailto:hello@matriverse.com" className="text-purple-500 hover:underline">hello@matriverse.com</a>
+                Contact us: <a href="mailto:hello@matriverse.live" className="text-purple-500 hover:underline">hello@matriverse.live</a>
               </p>
 
-              {/* Social Icons */}
+{/* Social Icons - commented out
               <div className="flex gap-3">
                 <a href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors">
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -1089,6 +1093,7 @@ export default function LandingPage() {
                   </svg>
                 </a>
               </div>
+              */}
             </div>
 
             {/* Right Side - Sitemap (Landing Page Sections Only) */}
