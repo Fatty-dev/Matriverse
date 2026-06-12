@@ -433,27 +433,6 @@ export default function LandingPage() {
                     alt="AR Training Preview"
                     className="w-full h-full object-cover"
                   />
-                  {/* Overlay gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-
-                  {/* Play button overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg"
-                    >
-                      <svg className="w-6 h-6 text-brand-accent ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </motion.button>
-                  </div>
-
-                  {/* Bottom info bar */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                    <p className="text-white font-medium text-sm">AR Position Training</p>
-                    <p className="text-white/70 text-xs">Interactive guidance session</p>
-                  </div>
                 </div>
               </div>
             </motion.div>
