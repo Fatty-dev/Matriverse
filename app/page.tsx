@@ -28,23 +28,23 @@ export default function LandingPage() {
     {
       name: "Fatiha Odusiji",
       title: "Developer",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
+      image: "/odusiji1.jpeg",
       bio: "Full-stack developer with 5+ years of experience in building scalable web applications.",
       email: "fatiha.o@matriverse.com"
     },
     {
-      name: "Fatiha Bello",
+      name: "Fathia Bello",
       title: "Project Manager",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop",
+      image: "/bello.jpeg",
       bio: "Experienced project manager specializing in healthcare technology and agile methodologies.",
-      email: "fatiha.b@matriverse.com"
+      email: "fathia.b@matriverse.com"
     },
     {
-      name: "Kusimo Adeyosola",
+      name: "Kushimo Adeyosola",
       title: "Founder & Registered Nurse",
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
+      image: "/Kushimo.jpeg",
       bio: "Board-certified physician with expertise in maternal health and prenatal care.",
-      email: "kusimo.a@matriverse.com"
+      email: "kushimo.a@matriverse.com"
     }
   ];
 

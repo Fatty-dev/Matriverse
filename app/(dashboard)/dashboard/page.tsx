@@ -148,7 +148,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       ? "Almost there! Focus on your labour preparation exercises."
                       : daysToDue <= 60
                         ? "Getting closer! Time to intensify your training."
-                        : "You&apos;re doing great! Keep building your skills."}
+                        : "You are doing great! Keep Preparing."}
                   </p>
                   {/* Mobile-only week and button */}
                   <div className="flex items-center gap-4 mt-4 sm:hidden">

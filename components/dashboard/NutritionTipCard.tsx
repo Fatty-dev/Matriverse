@@ -16,70 +16,70 @@ const NUTRITION_TIPS: NutritionTip[] = [
     week: 1,
     title: "Folate Focus",
     tip: "Folate is crucial for preventing neural tube defects. Aim for 400-800mcg daily.",
-    foods: ["Leafy greens", "Lentils", "Fortified cereals", "Citrus fruits"],
+    foods: ["Efo Tete (African Spinach)", "Moi Moi (Bean Pudding)", "Ugu (Pumpkin Leaves)", "Oranges"],
     icon: "leaf"
   },
   {
     week: 2,
     title: "Iron Boost",
     tip: "Your blood volume increases during pregnancy. Iron helps carry oxygen to your baby.",
-    foods: ["Red meat", "Spinach", "Beans", "Fortified grains"],
+    foods: ["Efo Riro (Spinach Stew)", "Ofada Rice with Locust Beans", "Kilishi (Dried Beef)", "Honey Beans"],
     icon: "heart"
   },
   {
     week: 3,
     title: "Calcium for Growth",
     tip: "Your baby needs calcium for strong bones and teeth. Aim for 1000mg daily.",
-    foods: ["Dairy products", "Almonds", "Sardines", "Broccoli"],
+    foods: ["Wara (Nigerian Cheese)", "Kunu (Millet Drink)", "Crayfish", "Ogbono Soup"],
     icon: "bone"
   },
   {
     week: 4,
     title: "Omega-3 Power",
     tip: "DHA supports your baby's brain and eye development. Consider safe fish sources.",
-    foods: ["Salmon", "Walnuts", "Chia seeds", "Fortified eggs"],
+    foods: ["Titus Fish (Mackerel)", "Stockfish", "Groundnuts", "Boiled Eggs"],
     icon: "brain"
   },
   {
     week: 5,
     title: "Protein Building",
     tip: "Protein supports your baby's growth. Aim for 70-100g daily in trimester 2 and 3.",
-    foods: ["Eggs", "Chicken", "Greek yogurt", "Quinoa"],
+    foods: ["Suya (Grilled Meat)", "Moi Moi", "Fura da Nono", "Chicken Pepper Soup"],
     icon: "muscle"
   },
   {
     week: 6,
     title: "Fiber Friends",
     tip: "Combat pregnancy constipation with plenty of fiber and water.",
-    foods: ["Whole grains", "Fruits", "Vegetables", "Legumes"],
+    foods: ["Ofada Rice", "Plantain (Ripe)", "Oats with Groundnuts", "Garden Egg"],
     icon: "grain"
   },
   {
     week: 7,
     title: "Vitamin D Sunshine",
     tip: "Vitamin D helps your body absorb calcium. Aim for 600 IU daily.",
-    foods: ["Fortified milk", "Egg yolks", "Mushrooms", "Safe fish"],
+    foods: ["Boiled Eggs", "Fresh Fish", "Peak Milk", "Tilapia"],
     icon: "sun"
   },
   {
     week: 8,
     title: "Hydration Station",
     tip: "Staying hydrated supports amniotic fluid and prevents UTIs. Aim for 8-10 glasses daily.",
-    foods: ["Water", "Herbal tea", "Fruits with high water content", "Coconut water"],
+    foods: ["Zobo (Hibiscus Drink)", "Coconut Water", "Watermelon", "Kunu Aya (Tiger Nut Drink)"],
     icon: "water"
   },
   {
     week: 9,
     title: "Zinc for Development",
     tip: "Zinc supports cell division and immune function during pregnancy.",
-    foods: ["Pumpkin seeds", "Beef", "Chickpeas", "Cashews"],
+    foods: ["Egusi Soup", "Palm Nut Soup", "Goat Meat", "Cashew Nuts"],
     icon: "shield"
   },
   {
     week: 10,
     title: "Vitamin C Immunity",
     tip: "Vitamin C helps absorb iron and supports your immune system.",
-    foods: ["Bell peppers", "Oranges", "Strawberries", "Tomatoes"],
+    foods: ["Agbalumo (African Star Apple)", "Pawpaw (Papaya)", "Mangoes", "Garden Egg"],
     icon: "citrus"
   }
 ];

@@ -1,11 +1,21 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui";
-import { getProfile } from "@/app/actions/profile";
+import { getProfile, updateProfile } from "@/app/actions/profile";
+import { calculateEDDFromLMP } from "@/lib/utils/pregnancy";
+import type { Profile } from "@/types";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "Not set";
   const date = new Date(dateStr);
   return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+function formatDateForInput(dateStr: string | null): string {
+  if (!dateStr) return "";
+  return dateStr.split("T")[0];
 }
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
@@ -31,17 +41,106 @@ function getGestationalWeek(dueDate?: string | null): number | null {
   return currentWeek > 0 && currentWeek <= 42 ? currentWeek : null;
 }
 
-export default async function ProfilePage() {
-  const profile = await getProfile();
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    dateOfBirth: "",
+    dueDate: "",
+    lastMenstrualPeriod: "",
+    partnerName: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    emergencyContactRelationship: "",
+  });
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    setIsLoading(true);
+    const profileData = await getProfile();
+    setProfile(profileData);
+    if (profileData) {
+      setFormData({
+        firstName: profileData.first_name || "",
+        lastName: profileData.last_name || "",
+        phone: profileData.phone || "",
+        dateOfBirth: formatDateForInput(profileData.date_of_birth),
+        dueDate: formatDateForInput(profileData.due_date),
+        lastMenstrualPeriod: formatDateForInput(profileData.last_menstrual_period),
+        partnerName: profileData.partner_name || "",
+        emergencyContactName: profileData.emergency_contact_name || "",
+        emergencyContactPhone: profileData.emergency_contact_phone || "",
+        emergencyContactRelationship: profileData.emergency_contact_relationship || "",
+      });
+    }
+    setIsLoading(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Auto-calculate EDD when LMP changes
+    if (name === "lastMenstrualPeriod" && value) {
+      const calculatedEDD = calculateEDDFromLMP(value);
+      setFormData(prev => ({ ...prev, dueDate: calculatedEDD }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setError(null);
+
+    const form = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      form.append(key, value);
+    });
+
+    const result = await updateProfile(form);
+
+    if (result.success) {
+      await loadProfile();
+      setIsModalOpen(false);
+    } else {
+      setError(result.error || "Failed to update profile");
+    }
+
+    setIsSaving(false);
+  };
+
+  if (isLoading) {
+    return (
+      <>
+        <Header title="Profile" profile={null} />
+        <main className="flex-1 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-mid"></div>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   const initials = getInitials(profile?.first_name, profile?.last_name);
   const fullName = getFullName(profile?.first_name, profile?.last_name);
   const week = getGestationalWeek(profile?.due_date);
-  const dueDate = formatDate(profile?.due_date);
+  const dueDate = formatDate(profile?.due_date ?? null);
 
   return (
     <>
-      <Header title="Scan & Profile" profile={profile} />
+      <Header title="Profile" profile={profile} />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-brand-surface/30">
         <div className="mb-6 sm:mb-8">
@@ -62,7 +161,10 @@ export default async function ProfilePage() {
                   {week ? `Week ${week} of Pregnancy` : "Pregnancy journey started"}
                 </p>
               </div>
-              <button className="px-4 sm:px-6 py-2 sm:py-2.5 border border-brand-mid text-brand-mid rounded-xl font-medium hover:bg-brand-mid hover:text-white transition-colors text-sm sm:text-base w-full sm:w-auto">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 sm:px-6 py-2 sm:py-2.5 border border-brand-mid text-brand-mid rounded-xl font-medium hover:bg-brand-mid hover:text-white transition-colors text-sm sm:text-base w-full sm:w-auto"
+              >
                 Edit Profile
               </button>
             </div>
@@ -117,7 +219,7 @@ export default async function ProfilePage() {
                 </svg>
                 <div>
                   <p className="text-xs text-text-muted">Date of Birth</p>
-                  <p className="text-sm font-medium text-text">{formatDate(profile?.date_of_birth)}</p>
+                  <p className="text-sm font-medium text-text">{formatDate(profile?.date_of_birth ?? null)}</p>
                 </div>
               </div>
 
@@ -201,6 +303,190 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Edit Profile Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-text">Edit Profile</h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Personal Information */}
+              <div>
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">Personal Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">First Name *</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Last Name *</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Date of Birth</label>
+                    <input
+                      type="date"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Partner Name</label>
+                    <input
+                      type="text"
+                      name="partnerName"
+                      value={formData.partnerName}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pregnancy Information */}
+              <div>
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">Pregnancy Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Last Menstrual Period (LMP)</label>
+                    <input
+                      type="date"
+                      name="lastMenstrualPeriod"
+                      value={formData.lastMenstrualPeriod}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                    <p className="text-xs text-text-muted mt-1">Enter LMP to auto-calculate due date</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Due Date (EDD)</label>
+                    <input
+                      type="date"
+                      name="dueDate"
+                      value={formData.dueDate}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                    <p className="text-xs text-text-muted mt-1">Auto-calculated from LMP or enter manually</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contact */}
+              <div>
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">Emergency Contact</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Contact Name</label>
+                    <input
+                      type="text"
+                      name="emergencyContactName"
+                      value={formData.emergencyContactName}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-1">Contact Phone</label>
+                    <input
+                      type="tel"
+                      name="emergencyContactPhone"
+                      value={formData.emergencyContactPhone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-text mb-1">Relationship</label>
+                    <select
+                      name="emergencyContactRelationship"
+                      value={formData.emergencyContactRelationship}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-mid focus:border-transparent"
+                    >
+                      <option value="">Select relationship</option>
+                      <option value="spouse">Spouse</option>
+                      <option value="partner">Partner</option>
+                      <option value="parent">Parent</option>
+                      <option value="sibling">Sibling</option>
+                      <option value="friend">Friend</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-text rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 px-4 py-2.5 bg-brand-mid text-white rounded-xl font-medium hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

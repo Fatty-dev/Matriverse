@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { calculateEDDFromLMP } from "@/lib/utils/pregnancy";
 
 // Validation schema for step 2
 const Step2Schema = z.object({
@@ -186,6 +187,96 @@ export async function getProfile() {
     .single();
 
   return profile;
+}
+
+// Schema for updating profile from dashboard
+const UpdateProfileSchema = z.object({
+  firstName: z.string().min(1, { message: "First name is required" }),
+  lastName: z.string().min(1, { message: "Last name is required" }),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  dueDate: z.string().optional(),
+  lastMenstrualPeriod: z.string().optional(),
+  partnerName: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelationship: z.string().optional(),
+});
+
+export async function updateProfile(
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  const validatedFields = UpdateProfileSchema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    phone: formData.get("phone"),
+    dateOfBirth: formData.get("dateOfBirth"),
+    dueDate: formData.get("dueDate"),
+    lastMenstrualPeriod: formData.get("lastMenstrualPeriod"),
+    partnerName: formData.get("partnerName"),
+    emergencyContactName: formData.get("emergencyContactName"),
+    emergencyContactPhone: formData.get("emergencyContactPhone"),
+    emergencyContactRelationship: formData.get("emergencyContactRelationship"),
+  });
+
+  if (!validatedFields.success) {
+    const errors = validatedFields.error.flatten().fieldErrors;
+    const firstError = Object.values(errors)[0]?.[0] || "Validation error";
+    return { success: false, error: firstError };
+  }
+
+  const {
+    firstName,
+    lastName,
+    phone,
+    dateOfBirth,
+    dueDate,
+    lastMenstrualPeriod,
+    partnerName,
+    emergencyContactName,
+    emergencyContactPhone,
+    emergencyContactRelationship,
+  } = validatedFields.data;
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  // Calculate EDD from LMP if LMP is provided and due date is not
+  let finalDueDate = dueDate;
+  if (lastMenstrualPeriod && !dueDate) {
+    finalDueDate = calculateEDDFromLMP(lastMenstrualPeriod);
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+      date_of_birth: dateOfBirth || null,
+      due_date: finalDueDate || null,
+      last_menstrual_period: lastMenstrualPeriod || null,
+      partner_name: partnerName || null,
+      emergency_contact_name: emergencyContactName || null,
+      emergency_contact_phone: emergencyContactPhone || null,
+      emergency_contact_relationship: emergencyContactRelationship || null,
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard");
+  return { success: true };
 }
 
 export async function markScanUploaded() {

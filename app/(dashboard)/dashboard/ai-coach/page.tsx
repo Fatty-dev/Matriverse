@@ -10,6 +10,7 @@ export default function AICoachPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("there");
+  const [currentWeek, setCurrentWeek] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,6 +22,19 @@ export default function AICoachPage() {
   const loadProfile = async () => {
     const profile = await getProfile();
     setFirstName(profile?.first_name || "there");
+
+    // Calculate current week from due date
+    if (profile?.due_date) {
+      const dueDate = new Date(profile.due_date);
+      const now = new Date();
+      const diffMs = dueDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const weeksRemaining = Math.ceil(diffDays / 7);
+      const week = 40 - weeksRemaining;
+      if (week > 0 && week <= 42) {
+        setCurrentWeek(week);
+      }
+    }
   };
 
   const loadConversations = async () => {
@@ -124,6 +138,7 @@ export default function AICoachPage() {
         <div className="flex-1 overflow-hidden">
           <AICoachChat
             firstName={firstName}
+            currentWeek={currentWeek}
             currentConversationId={currentConversationId}
             onConversationCreated={handleConversationCreated}
           />

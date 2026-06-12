@@ -15,20 +15,21 @@ type Message = {
 
 interface AICoachChatProps {
   firstName: string;
+  currentWeek?: number | null;
   currentConversationId: string | null;
   onConversationCreated?: (id: string) => void;
 }
 
-function welcomeMessage(firstName: string) {
+function welcomeMessage(firstName: string, currentWeek?: number | null) {
   return {
     id: "welcome",
     role: "assistant" as const,
-    content: getMatriverseWelcomeMessage(firstName),
+    content: getMatriverseWelcomeMessage(firstName, currentWeek),
   };
 }
 
-export function AICoachChat({ firstName, currentConversationId, onConversationCreated }: AICoachChatProps) {
-  const [messages, setMessages] = useState<Message[]>([welcomeMessage(firstName)]);
+export function AICoachChat({ firstName, currentWeek, currentConversationId, onConversationCreated }: AICoachChatProps) {
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage(firstName, currentWeek)]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -49,9 +50,9 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
       loadConversation(currentConversationId);
     } else {
       // Reset to welcome message for new conversation
-      setMessages([welcomeMessage(firstName)]);
+      setMessages([welcomeMessage(firstName, currentWeek)]);
     }
-  }, [currentConversationId, firstName]);
+  }, [currentConversationId, firstName, currentWeek]);
 
   const loadConversation = async (conversationId: string) => {
     setIsLoading(true);
@@ -59,7 +60,7 @@ export function AICoachChat({ firstName, currentConversationId, onConversationCr
       const result = await getConversationMessages(conversationId);
       if (result.success && result.messages) {
         setMessages(
-          result.messages.length > 0 ? result.messages : [welcomeMessage(firstName)]
+          result.messages.length > 0 ? result.messages : [welcomeMessage(firstName, currentWeek)]
         );
       }
     } catch (error) {
